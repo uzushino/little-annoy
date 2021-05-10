@@ -252,10 +252,6 @@ impl<const N: usize> Annoy<N> {
             children_indicies[0].clear();
             children_indicies[1].clear();
 
-            for z in 0..N {
-                m.v[z as usize] = 0.0;
-            }
-
             for i in 0..indices.len() {
                 let j = indices[i];
                 children_indicies[random_flip() as usize].push(j)
@@ -344,12 +340,11 @@ impl<const N: usize> Annoy<N> {
         }
 
         let m = nns_dist.len();
-        /*
+
         println!("m={} nns={}", m, nns.len());
         for i in 0..m {
             println!("({},{})", nns_dist[i].0, nns_dist[i].1);
         }
-        */
 
         let p = if n < m {
             n
@@ -359,7 +354,7 @@ impl<const N: usize> Annoy<N> {
 
         // std::partial_sort(nns_dist.begin(), nns_dist.begin() + p, nns_dist.end());
 
-        let mut distances: Vec<f64> = Vec::new();
+        //let mut distances: Vec<f64> = Vec::new();
         let mut result: Vec<i64> = Vec::new();
 
         for i in 0..p {
@@ -367,7 +362,7 @@ impl<const N: usize> Annoy<N> {
             result.push(nns_dist[i].1)
         }
 
-        return Vec::new();
+        result
     }
 }
 
