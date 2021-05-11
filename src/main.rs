@@ -96,21 +96,17 @@ struct Euclidian {}
 impl Euclidian {
     pub fn margin<const N: usize>(n: Node<N>, y: [f64; N], f: usize) -> f64 {
         let mut dot: f64 = n.a;
-
         for z in 0..f {
             dot += n.v[z as usize] * y[z as usize];
         }
-
         dot
     }
 
     pub fn side<const N: usize>(n: Node<N>, y: [f64; N], f: usize) -> bool {
         let dot = Self::margin(n, y, f);
-
         if dot != 0.0 {
             return dot > 0.0;
         }
-
         random_flip()
     }
 
@@ -211,6 +207,15 @@ impl<const N: usize> Annoy<N> {
             self._roots.push(ind);
         }
     }
+    
+    pub fn get_nns_by_vector(&mut self, v: [f64; N], n: usize, search_k: i64) -> (Vec<i64>, Vec<f64>) {
+        self._get_all_nns(v, n, search_k) 
+    }
+
+    pub fn get_nns_by_item(&mut self, item: i64, n: usize, search_k: i64) -> (Vec<i64>, Vec<f64>) {
+        let m = self._nodes.get(&item).unwrap();
+        self._get_all_nns(m.v, n, search_k) 
+    }
 
     fn _make_tree(&mut self, indices: &Vec<i64>) -> i64 {
         if indices.len() == 1 {
@@ -274,19 +279,17 @@ impl<const N: usize> Annoy<N> {
         
         let item = self._n_nodes;
         self._n_nodes = self._n_nodes + 1;
-
-        {
-            let mut e = self._nodes.entry(item).or_insert(Node::new());
-            e.n_descendants = m.n_descendants;
-            e.children = m.children;
-            e.v = m.v;
-            e.a = m.a;
-        }
+        
+        let mut e = self._nodes.entry(item).or_insert(Node::new());
+        e.n_descendants = m.n_descendants;
+        e.children = m.children;
+        e.v = m.v;
+        e.a = m.a;
 
         return item;
     }
 
-    pub fn _get_all_nns(&mut self, v: [f64; N], n: usize, k: i64) -> Vec<i64> {
+    fn _get_all_nns(&mut self, v: [f64; N], n: usize, k: i64) -> (Vec<i64>, Vec<f64>) {
         let mut q: BinaryHeap<(MinFloat, i64)> = BinaryHeap::new();
         let mut search_k = k.clone();
 
@@ -296,7 +299,6 @@ impl<const N: usize> Annoy<N> {
 
         for i in 0..self._roots.len() {
             let _a = self._roots[i];
-            
             q.push((MinFloat(std::f64::INFINITY), self._roots[i]))
         }
 
@@ -341,28 +343,23 @@ impl<const N: usize> Annoy<N> {
 
         let m = nns_dist.len();
 
-        println!("m={} nns={}", m, nns.len());
-        for i in 0..m {
-            println!("({},{})", nns_dist[i].0, nns_dist[i].1);
-        }
-
         let p = if n < m {
             n
         } else {
             m
-        };
+        } as usize;
 
-        // std::partial_sort(nns_dist.begin(), nns_dist.begin() + p, nns_dist.end());
+        nns_dist.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
 
-        //let mut distances: Vec<f64> = Vec::new();
-        let mut result: Vec<i64> = Vec::new();
+        let mut distances: Vec<f64> = Vec::new();
+        let mut result = Vec::new();
 
         for i in 0..p {
-            // distances.push(D::normalized_distance(nns_dist[i].0));
+            distances.push(nns_dist[i].0);
             result.push(nns_dist[i].1)
         }
 
-        result
+        (result, distances)
     }
 }
 
@@ -380,5 +377,9 @@ fn main() {
 
     ann.build(100);
 
-    ann._get_all_nns([1.0, 1.0], 2, -1);
+    let (result, distance) = ann.get_nns_by_vector([1.0, 1.0], 5, -1);
+   
+    for (i, id) in result.iter().enumerate() {
+        println!("result = {}, distance = {}", *id, distance[i]);
+    }
 }
