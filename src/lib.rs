@@ -4,7 +4,7 @@ use std::collections::BinaryHeap;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
-struct Node<const N: usize> {
+pub struct Node<const N: usize> {
     pub children: Vec<i64>,
     pub v: [f64; N],
     pub n_descendants: usize,
@@ -148,7 +148,7 @@ impl<const N: usize> Node<N> {
     }
 }
 
-struct Annoy<const N: usize> {
+pub struct Annoy<const N: usize> {
     pub _K: usize,
     pub _n_nodes: i64,
     pub _n_items: i64,
@@ -168,7 +168,7 @@ impl<const N: usize> Annoy<N> {
         }
     }
     
-    fn add_item(&mut self, item: i64, w: [f64; N]) {
+    pub fn add_item(&mut self, item: i64, w: [f64; N]) {
         let mut n = self._nodes.entry(item).or_insert(Node::new());
        
         n.children[0] = 0;
@@ -181,7 +181,7 @@ impl<const N: usize> Annoy<N> {
         }
     }
 
-    fn build(&mut self, q: i64) {
+    pub fn build(&mut self, q: i64) {
         self._n_nodes = self._n_items;
 
         loop {
@@ -360,26 +360,5 @@ impl<const N: usize> Annoy<N> {
         }
 
         (result, distances)
-    }
-}
-
-fn main() {
-    let mut ann = Annoy::new();
-    
-    ann.add_item(0, [1.0, 1.0]);
-    ann.add_item(1, [5.0, 5.0]);
-    ann.add_item(2, [2.0, 2.0]);
-    ann.add_item(3, [4.0, 4.0]);
-
-    for z in 0..3 {
-        ann.add_item(z + 4, [10.0, 10.0]);
-    }
-
-    ann.build(100);
-
-    let (result, distance) = ann.get_nns_by_vector([1.0, 1.0], 5, -1);
-   
-    for (i, id) in result.iter().enumerate() {
-        println!("result = {}, distance = {}", *id, distance[i]);
     }
 }
