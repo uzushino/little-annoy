@@ -69,8 +69,8 @@ fn two_means<const N: usize>(nodes: Vec<Node<N>>, f: usize, iv: &mut [f64; N], j
 
     for _ in 0..ITERATION_STEPS {
         let k = rand::random::<usize>() % count as usize;
-        let di = ic * Euclidian::distance(*iv, nodes[k].v, f);
-        let dj = jc * Euclidian::distance(*jv, nodes[k].v, f);
+        let di = ic * Euclidian::distance(iv, nodes[k].v, f);
+        let dj = jc * Euclidian::distance(jv, nodes[k].v, f);
         let norm = 1.0;
 
         if di < dj {
@@ -110,7 +110,7 @@ impl Euclidian {
         random_flip()
     }
 
-    pub fn distance<const N: usize>(x: [f64; N], y: [f64; N], f: usize) -> f64 {
+    pub fn distance<const N: usize>(x: &[f64; N], y: [f64; N], f: usize) -> f64 {
         let mut d = 0.0;
         for i in 0..f {
             d += ((x[i as usize] - y[i as usize])) * ((x[i as usize] - y[i as usize]));
@@ -208,13 +208,14 @@ impl<const N: usize> Annoy<N> {
         }
     }
     
-    pub fn get_nns_by_vector(&mut self, v: [f64; N], n: usize, search_k: i64) -> (Vec<i64>, Vec<f64>) {
+    pub fn get_nns_by_vector(&mut self, v: &[f64; N], n: usize, search_k: i64) -> (Vec<i64>, Vec<f64>) {
         self._get_all_nns(v, n, search_k) 
     }
 
     pub fn get_nns_by_item(&mut self, item: i64, n: usize, search_k: i64) -> (Vec<i64>, Vec<f64>) {
         let m = self._nodes.get(&item).unwrap();
-        self._get_all_nns(m.v, n, search_k) 
+        let v = m.v;
+        self._get_all_nns(&v, n, search_k) 
     }
 
     fn _make_tree(&mut self, indices: &Vec<i64>) -> i64 {
@@ -289,7 +290,7 @@ impl<const N: usize> Annoy<N> {
         return item;
     }
 
-    fn _get_all_nns(&mut self, v: [f64; N], n: usize, k: i64) -> (Vec<i64>, Vec<f64>) {
+    fn _get_all_nns(&mut self, v: &[f64; N], n: usize, k: i64) -> (Vec<i64>, Vec<f64>) {
         let mut q: BinaryHeap<(MinFloat, i64)> = BinaryHeap::new();
         let mut search_k = k.clone();
 
