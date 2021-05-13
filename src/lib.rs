@@ -50,7 +50,7 @@ fn normalize<const N: usize>(v: &mut [f64; N]) {
 
 const ITERATION_STEPS: usize = 200;
 
-fn two_means<const N: usize>(nodes: Vec<node::Node<N>>, iv: &mut [f64; N], jv: &mut [f64; N]) {
+fn two_means<D: Distance, const N: usize>(nodes: Vec<node::Node<N>>, iv: &mut [f64; N], jv: &mut [f64; N]) {
     let count = nodes.len();
     let i: u64 = rand::random::<u64>() % count as u64;
     let mut j : u64 = rand::random::<u64>() % (count - 1) as u64;
@@ -67,8 +67,8 @@ fn two_means<const N: usize>(nodes: Vec<node::Node<N>>, iv: &mut [f64; N], jv: &
 
     for _ in 0..ITERATION_STEPS {
         let k = rand::random::<usize>() % count as usize;
-        let di = ic * Euclidian::distance(iv, nodes[k].v);
-        let dj = jc * Euclidian::distance(jv, nodes[k].v);
+        let di = ic * D::distance(iv, nodes[k].v);
+        let dj = jc * D::distance(jv, nodes[k].v);
         let norm = 1.0;
 
         if di < dj {

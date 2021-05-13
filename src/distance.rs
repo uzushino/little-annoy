@@ -48,7 +48,7 @@ impl Distance for Euclidian {
         let mut best_iv: [f64; N] = [0.0; N];
         let mut best_jv: [f64; N] = [0.0; N];
 
-        two_means(nodes, &mut best_iv, &mut best_jv);
+        two_means::<Euclidian, N>(nodes, &mut best_iv, &mut best_jv);
 
         for z in 0..N {
             n.v[z] = best_iv[z] - best_jv[z];

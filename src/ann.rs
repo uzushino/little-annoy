@@ -116,10 +116,7 @@ impl<const N: usize> Annoy<N> {
             children_indicies[0].clear();
             children_indicies[1].clear();
 
-            for i in 0..indices.len() {
-                let j = indices[i];
-                children_indicies[random_flip() as usize].push(j)
-            }
+            indices.into_iter().for_each(|j| children_indicies[random_flip() as usize].push(*j));
         }
 
         let flip = if children_indicies[0].len() > children_indicies[1].len() {
