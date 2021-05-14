@@ -66,14 +66,14 @@ impl<const N: usize> Annoy<N> {
         }
     }
     
-    pub fn get_nns_by_vector(&mut self, v: &[f64; N], n: usize, search_k: i64) -> (Vec<i64>, Vec<f64>) {
+    pub fn get_nns_by_vector(&mut self, v: [f64; N], n: usize, search_k: i64) -> (Vec<i64>, Vec<f64>) {
         self._get_all_nns(v, n, search_k) 
     }
 
     pub fn get_nns_by_item(&mut self, item: i64, n: usize, search_k: i64) -> (Vec<i64>, Vec<f64>) {
         let m = self._nodes.get(&item).unwrap();
         let v = m.v;
-        self._get_all_nns(&v, n, search_k) 
+        self._get_all_nns(v, n, search_k) 
     }
 
     fn _make_tree<D>(&mut self, indices: &Vec<i64>) -> i64 where D: Distance {
@@ -100,7 +100,6 @@ impl<const N: usize> Annoy<N> {
         });
         let children_indicies = &mut [Vec::new(), Vec::new()];
         let mut m = Node::new();
-
         D::create_split(children, &mut m);
 
         for i in 0..indices.len() {
@@ -145,7 +144,7 @@ impl<const N: usize> Annoy<N> {
         return item;
     }
 
-    fn _get_all_nns(&mut self, v: &[f64; N], n: usize, mut search_k: i64) -> (Vec<i64>, Vec<f64>) {
+    fn _get_all_nns(&mut self, v: [f64; N], n: usize, mut search_k: i64) -> (Vec<i64>, Vec<f64>) {
         let mut q: BinaryHeap<(Numeric, i64)> = BinaryHeap::new();
         
         if search_k == -1 {
