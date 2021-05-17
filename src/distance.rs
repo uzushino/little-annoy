@@ -42,17 +42,16 @@ fn two_means<D: Distance, const N: usize>(nodes: Vec<Node<N>>) -> ([f64; N], [f6
         let k = rand::random::<usize>() % count as usize;
         let di = ic * D::distance(iv, nodes[k].v);
         let dj = jc * D::distance(jv, nodes[k].v);
-        let norm = 1.0;
 
         if di < dj {
             for z in 0..N {
-                iv[z] = (iv[z] * ic + nodes[k].v[z] / norm) / (ic + 1.0);
+                iv[z] = (iv[z] * ic + nodes[k].v[z]) / (ic + 1.0);
             }
 
             ic += 1.0;
         } else if dj < di {
             for z in 0..N {
-                jv[z] = (jv[z] * jc + nodes[k].v[z] / norm) / (jc + 1.0);
+                jv[z] = (jv[z] * jc + nodes[k].v[z]) / (jc + 1.0);
             }
 
             jc += 1.0;
@@ -111,6 +110,7 @@ impl Distance for Euclidian {
         normalize(&mut n.v);
 
         n.a = 0.0;
+        
         for z in 0..N {
             n.a += -n.v[z] * (best_iv[z] + best_jv[z]) / 2.0;
         }
