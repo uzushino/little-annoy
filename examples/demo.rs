@@ -1,4 +1,4 @@
-use little_annoy::Annoy;
+use little_annoy::{ Annoy, Euclidiean };
 
 fn main() {
     let mut ann = Annoy::new();
@@ -14,7 +14,7 @@ fn main() {
 
     ann.build(100);
 
-    let (result, distance) = ann.get_nns_by_vector([1.0, 1.0], 5, -1);
+    let (result, distance) = ann.get_nns_by_vector::<Euclidiean>([1.0, 1.0], 5, -1);
    
     for (i, id) in result.iter().enumerate() {
         println!("result = {}, distance = {}", *id, distance[i]);

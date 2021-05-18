@@ -2,7 +2,7 @@ use std::usize;
 use std::collections::BinaryHeap;
 use std::collections::HashMap;
 
-use crate::distance::{ Euclidian, Distance };
+use crate::distance::{ Euclidiean, Distance };
 use crate::node::Node;
 use crate::{ Numeric, random_flip };
 
@@ -60,20 +60,20 @@ impl<const N: usize> Annoy<N> {
                 }
             }
             
-            let ind = self._make_tree::<Euclidian>(&indices);
+            let ind = self._make_tree::<Euclidiean>(&indices);
 
             self._roots.push(ind);
         }
     }
     
-    pub fn get_nns_by_vector(&mut self, v: [f64; N], n: usize, search_k: i64) -> (Vec<i64>, Vec<f64>) {
-        self._get_all_nns(v, n, search_k) 
+    pub fn get_nns_by_vector<D>(&mut self, v: [f64; N], n: usize, search_k: i64) -> (Vec<i64>, Vec<f64>) where D: Distance {
+        self._get_all_nns::<D>(v, n, search_k) 
     }
 
-    pub fn get_nns_by_item(&mut self, item: i64, n: usize, search_k: i64) -> (Vec<i64>, Vec<f64>) {
+    pub fn get_nns_by_item<D>(&mut self, item: i64, n: usize, search_k: i64) -> (Vec<i64>, Vec<f64>) where D: Distance {
         let m = self._nodes.get(&item).unwrap();
         let v = m.v;
-        self._get_all_nns(v, n, search_k) 
+        self._get_all_nns::<D>(v, n, search_k) 
     }
 
     fn _make_tree<D>(&mut self, indices: &Vec<i64>) -> i64 where D: Distance {
@@ -129,7 +129,7 @@ impl<const N: usize> Annoy<N> {
         for side in 0..2 {
             let ii = side ^ flip;
             let a = &children_indicies[ii];
-            m.children[ii] = self._make_tree::<Euclidian>(a);
+            m.children[ii] = self._make_tree::<D>(a);
         }
         
         let item = self._n_nodes;
@@ -144,7 +144,7 @@ impl<const N: usize> Annoy<N> {
         return item;
     }
 
-    fn _get_all_nns(&mut self, v: [f64; N], n: usize, mut search_k: i64) -> (Vec<i64>, Vec<f64>) {
+    fn _get_all_nns<D>(&mut self, v: [f64; N], n: usize, mut search_k: i64) -> (Vec<i64>, Vec<f64>) where D: Distance {
         let mut q: BinaryHeap<(Numeric, i64)> = BinaryHeap::new();
         
         if search_k == -1 {
@@ -170,7 +170,7 @@ impl<const N: usize> Annoy<N> {
                 let dst = nd.children.clone();
                 nns.extend(dst);
             } else {
-                let margin = Euclidian::margin(nd.clone(), v.clone());
+                let margin = D::margin(nd.clone(), v.clone());
 
                 q.push((Numeric(d.min(0.0 + margin)), nd.children[1]));
                 q.push((Numeric(d.min(0.0 - margin)), nd.children[0]));
@@ -190,7 +190,7 @@ impl<const N: usize> Annoy<N> {
 
             last = j;
             let mut _n = self._nodes.entry(j).or_insert(Node::new());
-            let dist = Euclidian::distance(v, _n.v);
+            let dist = Euclidiean::distance(v, _n.v);
             nns_dist.push((dist, j));
         }
 

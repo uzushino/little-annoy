@@ -5,6 +5,7 @@ mod distance;
 pub mod ann;
 
 pub use ann::Annoy;
+pub use distance::Euclidiean;
 
 #[derive(PartialEq)]
 struct Numeric(f64);
