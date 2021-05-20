@@ -71,9 +71,9 @@ pub trait Distance {
     fn margin<const N: usize>(n: Node<N>, y: [f64; N]) -> f64;
 }
 
-pub struct Euclidiean {}
+pub struct Euclidean {}
 
-impl Distance for Euclidiean {
+impl Distance for Euclidean {
     fn margin<const N: usize>(n: Node<N>, y: [f64; N]) -> f64 {
         let mut dot: f64 = n.a;
 
@@ -101,7 +101,7 @@ impl Distance for Euclidiean {
     }
 
     fn create_split<const N: usize>(nodes: Vec<Node<N>>, n: &mut Node<N>) {
-        let (best_iv, best_jv) = two_means::<Euclidiean, N>(nodes);
+        let (best_iv, best_jv) = two_means::<Euclidean, N>(nodes);
 
         for z in 0..N {
             n.v[z] = best_iv[z] - best_jv[z];

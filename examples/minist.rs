@@ -1,6 +1,6 @@
 use mnist::{Mnist, MnistBuilder};
 use rulinalg::matrix::{BaseMatrix, Matrix};
-use little_annoy::{ Annoy, Euclidiean };
+use little_annoy::{ Annoy, Euclidean };
 use rand::Rng;
 
 use std::convert::TryInto;
@@ -88,7 +88,7 @@ fn main() {
             .collect::<Vec<_>>();
         
         let arr = vec_to_fixed_slice(img_to_vec) as [f64; 28*28];
-        let (result, _distance) = ann.get_nns_by_vector::<Euclidiean>(arr, 1, -1);
+        let (result, _distance) = ann.get_nns_by_vector::<Euclidean>(arr, 1, -1);
 
         let actual = result
             .into_iter()

@@ -2,7 +2,7 @@ use std::usize;
 use std::collections::BinaryHeap;
 use std::collections::HashMap;
 
-use crate::distance::{ Euclidiean, Distance };
+use crate::distance::{ Euclidean, Distance };
 use crate::node::Node;
 use crate::{ Numeric, random_flip };
 
@@ -60,7 +60,7 @@ impl<const N: usize> Annoy<N> {
                 }
             }
             
-            let ind = self._make_tree::<Euclidiean>(&indices);
+            let ind = self._make_tree::<Euclidean>(&indices);
 
             self._roots.push(ind);
         }
@@ -190,7 +190,7 @@ impl<const N: usize> Annoy<N> {
 
             last = j;
             let mut _n = self._nodes.entry(j).or_insert(Node::new());
-            let dist = Euclidiean::distance(v, _n.v);
+            let dist = Euclidean::distance(v, _n.v);
             nns_dist.push((dist, j));
         }
 
