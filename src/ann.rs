@@ -98,7 +98,8 @@ impl<const N: usize> Annoy<N> {
                 children.push(n.clone());
             }
         });
-        let children_indicies = &mut [Vec::new(), Vec::new()];
+
+        let children_indices = &mut [Vec::new(), Vec::new()];
         let mut m = Node::new();
         D::create_split(children, &mut m);
 
@@ -107,18 +108,18 @@ impl<const N: usize> Annoy<N> {
 
             if let Some(n) = self._nodes.get(&j) {
                 let side = D::side(m.clone(), n.v);
-                children_indicies[side as usize].push(j);
+                children_indices[side as usize].push(j);
             }
         }
 
-        while children_indicies[0].len() == 0 || children_indicies[1].len() == 0 {
-            children_indicies[0].clear();
-            children_indicies[1].clear();
+        while children_indices[0].len() == 0 || children_indices[1].len() == 0 {
+            children_indices[0].clear();
+            children_indices[1].clear();
 
-            indices.into_iter().for_each(|j| children_indicies[random_flip() as usize].push(*j));
+            indices.into_iter().for_each(|j| children_indices[random_flip() as usize].push(*j));
         }
 
-        let flip = if children_indicies[0].len() > children_indicies[1].len() {
+        let flip = if children_indices[0].len() > children_indices[1].len() {
             1
         } else {
             0
@@ -128,7 +129,7 @@ impl<const N: usize> Annoy<N> {
 
         for side in 0..2 {
             let ii = side ^ flip;
-            let a = &children_indicies[ii];
+            let a = &children_indices[ii];
             m.children[ii] = self._make_tree::<D>(a);
         }
         
@@ -195,7 +196,6 @@ impl<const N: usize> Annoy<N> {
         }
 
         let m = nns_dist.len();
-
         let p = if n < m {
             n
         } else {
