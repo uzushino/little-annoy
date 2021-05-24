@@ -26,18 +26,13 @@ fn two_means<D: Distance, const N: usize>(nodes: Vec<Node<N>>) -> ([f64; N], [f6
     let count = nodes.len();
     let i: u64 = rand::random::<u64>() % count as u64;
     let mut j : u64 = rand::random::<u64>() % (count - 1) as u64;
-    let mut iv =  [0.0; N];
-    let mut jv =  [0.0; N];
+    let mut iv = nodes[i as usize].v;
+    let mut jv = nodes[j as usize].v;
     j += (j >= i) as u64;
-
-    for d in 0..N {
-        iv[d] = nodes[i as usize].v[d];
-        jv[d] = nodes[j as usize].v[d];
-    }
 
     let mut ic = 1.0;
     let mut jc = 1.0;
-
+    
     for _ in 0..ITERATION_STEPS {
         let k = rand::random::<usize>() % count as usize;
         let di = ic * D::distance(iv, nodes[k].v);

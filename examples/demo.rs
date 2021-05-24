@@ -8,8 +8,8 @@ fn main() {
     ann.add_item(2, [2.0, 2.0]);
     ann.add_item(3, [4.0, 4.0]);
 
-    for z in 0..3 {
-        ann.add_item(z + 4, [10.0, 10.0]);
+    for z in 4..10 {
+        ann.add_item(z, [10.0, 10.0]);
     }
 
     ann.build(100);
