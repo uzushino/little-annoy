@@ -1,11 +1,13 @@
 use std::usize;
 use std::collections::BinaryHeap;
 use std::collections::HashMap;
+use serde::{Serialize, Deserialize};
 
 use crate::distance::{ Euclidean, Distance };
 use crate::node::Node;
 use crate::{ Numeric, random_flip };
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Annoy<const N: usize> {
     pub _K: usize,
     pub _n_nodes: i64,
