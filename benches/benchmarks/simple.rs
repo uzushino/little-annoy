@@ -2,7 +2,7 @@ use criterion::{criterion_group, Criterion};
 
 use little_annoy::Annoy;
 
-pub fn build_100(c: &mut Criterion) {
+pub fn build(c: &mut Criterion) {
     let mut ann = Annoy::new();
     
     ann.add_item(0, [1.0, 1.0]);
@@ -14,7 +14,7 @@ pub fn build_100(c: &mut Criterion) {
         ann.add_item(z, [10.0, 10.0]);
     }
 
-    ann.build(100);
+    c.bench_function("build 2", |b| b.iter(|| ann.build(20)));
 }
 
-criterion_group!(benches, build_100);
+criterion_group!(benches, build);
