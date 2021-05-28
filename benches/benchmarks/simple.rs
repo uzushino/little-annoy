@@ -1,5 +1,6 @@
 use criterion::{criterion_group, Criterion};
 
+use rand;
 use little_annoy::Annoy;
 
 pub fn build(c: &mut Criterion) {
@@ -14,7 +15,41 @@ pub fn build(c: &mut Criterion) {
         ann.add_item(z, [10.0, 10.0]);
     }
 
-    c.bench_function("build 2", |b| b.iter(|| ann.build(20)));
+    c.bench_function("build 2", |b| b.iter(|| ann.build(2)));
+    c.bench_function("build 10", |b| b.iter(|| ann.build(10)));
+    c.bench_function("build 100", |b| b.iter(|| ann.build(100)));
+}
+
+pub fn item(c: &mut Criterion) {
+    fn create_item<const N: usize>() -> [f64; N] {
+        let mut arr = [0.0; N];
+        for i in 0..N {
+            arr[i] = rand::random();
+        }
+        arr
+    }
+
+    c.bench_function("add_item 2", |b| b.iter(|| {
+        let mut ann = Annoy::new();
+        for i in 0..100 {
+            ann.add_item(i, create_item::<2>());
+        }
+        ann.build(100)
+    }));
+    c.bench_function("add_item 10", |b| b.iter(|| {
+        let mut ann = Annoy::new();
+        for i in 0..100 {
+            ann.add_item(i, create_item::<10>());
+        }
+        ann.build(100)
+    }));
+    c.bench_function("add_item 100", |b| b.iter(|| {
+        let mut ann = Annoy::new();
+        for i in 0..100 {
+            ann.add_item(i, create_item::<100>());
+        }
+        ann.build(100)
+    }));
 }
 
 criterion_group!(benches, build);
