@@ -20,7 +20,7 @@ pub fn build(c: &mut Criterion) {
     c.bench_function("build 100", |b| b.iter(|| ann.build(100)));
 }
 
-pub fn item(c: &mut Criterion) {
+pub fn add_item(c: &mut Criterion) {
     fn create_item<const N: usize>() -> [f64; N] {
         let mut arr = [0.0; N];
         for i in 0..N {
@@ -36,13 +36,6 @@ pub fn item(c: &mut Criterion) {
         }
         ann.build(100)
     }));
-    c.bench_function("add_item 10", |b| b.iter(|| {
-        let mut ann = Annoy::new();
-        for i in 0..100 {
-            ann.add_item(i, create_item::<10>());
-        }
-        ann.build(100)
-    }));
     c.bench_function("add_item 100", |b| b.iter(|| {
         let mut ann = Annoy::new();
         for i in 0..100 {
@@ -50,6 +43,17 @@ pub fn item(c: &mut Criterion) {
         }
         ann.build(100)
     }));
+    c.bench_function("add_item 10_000", |b| b.iter(|| {
+        let mut ann = Annoy::new();
+        for i in 0..100 {
+            ann.add_item(i, create_item::<10_000>());
+        }
+        ann.build(100)
+    }));
 }
 
-criterion_group!(benches, build);
+criterion_group!(
+    benches, 
+    build,
+    add_item
+);
