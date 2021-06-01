@@ -193,7 +193,7 @@ impl<const N: usize> Annoy<N> {
 
             last = j;
             let mut _n = self._nodes.entry(j).or_insert(Node::new());
-            let dist = Euclidean::distance(v, _n.v);
+            let dist = D::distance(v, _n.v);
             nns_dist.push((dist, j));
         }
 
