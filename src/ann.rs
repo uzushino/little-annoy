@@ -175,8 +175,8 @@ impl<const N: usize> Annoy<N> {
             } else {
                 let margin = D::margin(nd.clone(), v.clone());
 
-                q.push((Numeric(d.min(0.0 + margin)), nd.children[1]));
-                q.push((Numeric(d.min(0.0 - margin)), nd.children[0]));
+                q.push((Numeric(d.min(+margin)), nd.children[1]));
+                q.push((Numeric(d.min(-margin)), nd.children[0]));
             }
         }
 
