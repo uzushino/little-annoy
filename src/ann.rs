@@ -108,7 +108,7 @@ impl<const N: usize> Annoy<N> {
             let j = indices[i];
 
             if let Some(n) = self._nodes.get(&j) {
-                let side = D::side(m.clone(), n.v);
+                let side = D::side(&m, n.v);
                 children_indices[side as usize].push(j);
             }
         }

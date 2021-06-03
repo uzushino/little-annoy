@@ -26,9 +26,9 @@ fn two_means<D: Distance, const N: usize>(nodes: Vec<Node<N>>) -> ([f64; N], [f6
     let count = nodes.len();
     let i: u64 = rand::random::<u64>() % count as u64;
     let mut j : u64 = rand::random::<u64>() % (count - 1) as u64;
+    j += (j >= i) as u64;
     let mut iv = nodes[i as usize].v;
     let mut jv = nodes[j as usize].v;
-    j += (j >= i) as u64;
 
     let mut ic = 1.0;
     let mut jc = 1.0;
@@ -61,15 +61,15 @@ pub trait Distance {
 
     fn create_split<const N: usize>(nodes: Vec<Node<N>>, n: &mut Node<N>);
     
-    fn side<const N: usize>(n: Node<N>, y: [f64; N]) -> bool;
+    fn side<const N: usize>(n: &Node<N>, y: [f64; N]) -> bool;
 
-    fn margin<const N: usize>(n: Node<N>, y: [f64; N]) -> f64;
+    fn margin<const N: usize>(n: &Node<N>, y: [f64; N]) -> f64;
 }
 
 pub struct Euclidean {}
 
 impl Distance for Euclidean {
-    fn margin<const N: usize>(n: Node<N>, y: [f64; N]) -> f64 {
+    fn margin<const N: usize>(n: &Node<N>, y: [f64; N]) -> f64 {
         let mut dot: f64 = n.a;
 
         for z in 0..N {
@@ -79,7 +79,7 @@ impl Distance for Euclidean {
         dot
     }
 
-    fn side<const N: usize>(n: Node<N>, y: [f64; N]) -> bool {
+    fn side<const N: usize>(n: &Node<N>, y: [f64; N]) -> bool {
         let dot = Self::margin(n, y);
         if dot != 0.0 {
             return dot > 0.0;
