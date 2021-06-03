@@ -53,7 +53,6 @@ impl<const N: usize> Annoy<N> {
             }
             
             let mut indices: Vec<i64> = Vec::new();
-            
             for i in 0..self._n_items {
                 if let Some(n) = self._nodes.get(&i) {
                     if n.n_descendants >= 1 {
@@ -173,10 +172,10 @@ impl<const N: usize> Annoy<N> {
                 let dst = nd.children.clone();
                 nns.extend(dst);
             } else {
-                let margin = D::margin(nd.clone(), v.clone());
+                let margin = D::margin(nd, v);
 
-                q.push((Numeric(d.min(+margin)), nd.children[1]));
-                q.push((Numeric(d.min(-margin)), nd.children[0]));
+                q.push((Numeric(d.min(0.0+margin)), nd.children[1]));
+                q.push((Numeric(d.min(0.0-margin)), nd.children[0]));
             }
         }
 
