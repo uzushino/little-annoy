@@ -111,3 +111,29 @@ impl Distance for Euclidean {
         }
     }
 }
+
+pub struct Hamming {}
+
+impl Distance for Hamming {
+    fn margin<const N: usize>(n: &Node<N>, y: [f64; N]) -> f64 {
+        let mut dist = 0;
+
+        for i in 0..N {
+            dist += ((n.v[i] as u64) ^ (y[i] as u64)).count_ones();
+        }
+        
+        dist as f64
+    }
+
+    fn side<const N: usize>(n: &Node<N>, y: [f64; N]) -> bool {
+        todo!()
+    }
+
+    fn distance<const N: usize>(x: [f64; N], y: [f64; N]) -> f64 {
+        todo!()
+    }
+
+    fn create_split<const N: usize>(nodes: Vec<Node<N>>, n: &mut Node<N>) {
+        todo!()
+    }
+}
