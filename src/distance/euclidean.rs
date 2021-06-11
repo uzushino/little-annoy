@@ -1,4 +1,29 @@
+use crate::distance::{ two_means, normalize, Distance};
+use crate::random_flip;
+
+use serde::{Serialize, Deserialize};
+
 pub struct Euclidean {}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Node<const N: usize> {
+    pub children: Vec<i64>,
+    #[serde(with = "arrays")]
+    pub v: [f64; N],
+    pub n_descendants: usize,
+    pub a: f64,
+}
+
+impl<const N: usize> Node<N> {
+    pub fn new() -> Self {
+        Node {
+            children: vec![0, 0],
+            v: [0.0; N],
+            n_descendants: 0,
+            a: 0.0,
+        }
+    }
+}
 
 impl Euclidean {
     fn margin<const N: usize>(n: &Node<N>, y: [f64; N]) -> f64 {
@@ -11,7 +36,6 @@ impl Euclidean {
         dot
     }
 }
-
 
 impl Distance for Euclidean {
     fn side<const N: usize>(n: &Node<N>, y: [f64; N]) -> bool {
@@ -47,69 +71,62 @@ impl Distance for Euclidean {
     }
 }
 
-pub struct Hamming {}
+// https://github.com/serde-rs/serde/issues/1937#issuecomment-812137971
+mod arrays {
+    use std::{convert::TryInto, marker::PhantomData};
 
-impl Hamming {
-    fn margin<const N: usize>(n: &Node<N>, y: [i64; N]) -> bool {
-        let n_bits = 4 * 8 as i64;
-        let chunk = n.v[0] as i64 / n_bits;
-        (y[chunk as usize] & (1 << (n_bits - 1 - (n.v[0] as i64 % n_bits)))) != 0
-    }
-}
-
-const MAX_ITERATIONS: usize = 20;
-
-impl Distance for Hamming {
-    fn side<const N: usize>(n: &Node<N>, y: [f64; N]) -> bool {
-        Self::margin(n, y)
-    }
-
-    fn distance<const N: usize>(x: [f64; N], y: [f64; N]) -> f64 {
-        let mut dist = 0;
-
-        for i in 0..N {
-            dist += ((x[i] as u64) ^ (y[i] as u64)).count_ones();
+    use serde::{
+        de::{SeqAccess, Visitor},
+        ser::SerializeTuple,
+        Deserialize, Deserializer, Serialize, Serializer,
+    };
+    pub fn serialize<S: Serializer, T: Serialize, const N: usize>(
+        data: &[T; N],
+        ser: S,
+    ) -> Result<S::Ok, S::Error> {
+        let mut s = ser.serialize_tuple(N)?;
+        for item in data {
+            s.serialize_element(item)?;
         }
-
-        dist as f64
+        s.end()
     }
 
-    fn create_split<const N: usize>(nodes: Vec<Node<N>>, n: &mut Node<N>) {
-        let mut cur_size = 0;
-        let mut idx = 0;
-        for i in 0..MAX_ITERATIONS {
-            n.v[0] = rand::random::<f64>() % N;
-            cur_size = 0;
+    struct ArrayVisitor<T, const N: usize>(PhantomData<T>);
 
-            for node in nodes.iter() {
-                if Self::margin(node, n.v) {
-                    cur_size += 1;
-                }
-            }
+    impl<'de, T, const N: usize> Visitor<'de> for ArrayVisitor<T, N>
+    where
+        T: Deserialize<'de>,
+    {
+        type Value = [T; N];
 
-            if cur_size > 0 && cur_size < nodes.len() {
-                break
-            }
-
-            i = idx;
+        fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+            formatter.write_str(&format!("an array of length {}", N))
         }
 
-        if idx == MAX_ITERATIONS {
-            let jdx = 0;
-            for j in 0..N {
-                n.v[0] = j;
-                cur_size = 0 ;
-
-                for node in nodes.iter() {
-                    if Self::margin(node, n.v) {
-                        cur_size += 1;
-                    }
-                }
-
-                if cur_size > 0 && cur_size < nodes.len() {
-                    break
+        #[inline]
+        fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+        where
+            A: SeqAccess<'de>,
+        {
+            // can be optimized using MaybeUninit
+            let mut data = Vec::with_capacity(N);
+            for _ in 0..N {
+                match (seq.next_element())? {
+                    Some(val) => data.push(val),
+                    None => return Err(serde::de::Error::invalid_length(N, &self)),
                 }
             }
+            match data.try_into() {
+                Ok(arr) => Ok(arr),
+                Err(_) => unreachable!(),
+            }
         }
+    }
+    pub fn deserialize<'de, D, T, const N: usize>(deserializer: D) -> Result<[T; N], D::Error>
+    where
+        D: Deserializer<'de>,
+        T: Deserialize<'de>,
+    {
+        deserializer.deserialize_tuple(N, ArrayVisitor::<T, N>(PhantomData))
     }
 }

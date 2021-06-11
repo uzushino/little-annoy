@@ -1,9 +1,9 @@
-use std::char::MAX;
-
-use crate::node;
 use crate::node::Node;
 
-use crate::random_flip;
+mod euclidean;
+mod hamming;
+
+pub use euclidean::Euclidean;
 
 fn get_norm<const N: usize>(v: [f64; N]) -> f64{
     let mut sq_norm = 0.0;
