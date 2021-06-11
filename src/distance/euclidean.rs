@@ -37,16 +37,20 @@ impl Euclidean {
     }
 }
 
-impl Distance for Euclidean {
-    fn side<const N: usize>(n: &Node<N>, y: [f64; N]) -> bool {
+impl<const N: usize> Distance<N> for Euclidean {
+    type Node = Node<N>;
+
+    fn side(n: &Self::Node, y: [f64; N]) -> bool {
         let dot = Self::margin(n, y);
+
         if dot != 0.0 {
             return dot > 0.0;
         }
+
         random_flip()
     }
 
-    fn distance<const N: usize>(x: [f64; N], y: [f64; N]) -> f64 {
+    fn distance(x: [f64; N], y: [f64; N]) -> f64 {
         let mut d = 0.0;
         for i in 0..N {
             d += ((x[i as usize] - y[i as usize])) * ((x[i as usize] - y[i as usize]));
@@ -54,7 +58,7 @@ impl Distance for Euclidean {
         d
     }
 
-    fn create_split<const N: usize>(nodes: Vec<Node<N>>, n: &mut Node<N>) {
+    fn create_split(nodes: Vec<Self::Node>, n: &mut Self::Node) {
         let (best_iv, best_jv) = two_means::<Euclidean, N>(nodes);
 
         for z in 0..N {

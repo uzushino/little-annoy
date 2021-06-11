@@ -1,7 +1,7 @@
 use crate::node::Node;
 
-mod euclidean;
-mod hamming;
+pub mod euclidean;
+pub mod hamming;
 
 pub use euclidean::Euclidean;
 
@@ -25,7 +25,7 @@ fn normalize<const N: usize>(v: &mut [f64; N]) {
 
 const ITERATION_STEPS: usize = 200;
 
-fn two_means<D: Distance, const N: usize>(nodes: Vec<Node<N>>) -> ([f64; N], [f64; N]) {
+fn two_means<D: Distance<N>, const N: usize>(nodes: Vec<Node<N>>) -> ([f64; N], [f64; N]) {
     let count = nodes.len();
     let i: u64 = rand::random::<u64>() % count as u64;
     let mut j : u64 = rand::random::<u64>() % (count - 1) as u64;
@@ -59,10 +59,12 @@ fn two_means<D: Distance, const N: usize>(nodes: Vec<Node<N>>) -> ([f64; N], [f6
     (iv, jv)
 }
 
-pub trait Distance {
-    fn distance<const N: usize>(x: [f64; N], y: [f64; N]) -> f64;
+pub trait Distance<const N: usize> {
+    type Node;
 
-    fn create_split<const N: usize>(nodes: Vec<Node<N>>, n: &mut Node<N>);
+    fn distance(x: [f64; N], y: [f64; N]) -> f64;
+
+    fn create_split(nodes: Vec<Self::Node>, n: &mut Self::Node);
     
-    fn side<const N: usize>(n: &Node<N>, y: [f64; N]) -> bool;
+    fn side(n: &Self::Node, y: [f64; N]) -> bool;
 }
