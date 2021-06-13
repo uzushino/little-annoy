@@ -1,4 +1,4 @@
-use crate::distance::{ two_means, normalize, Distance};
+use crate::distance::{ two_means, normalize, Distance, NodeImpl };
 use crate::random_flip;
 
 use serde::{Serialize, Deserialize};
@@ -14,8 +14,8 @@ pub struct Node<const N: usize> {
     pub a: f64,
 }
 
-impl<const N: usize> Node<N> {
-    pub fn new() -> Self {
+impl<const N: usize> NodeImpl<N> for Node<N> {
+    fn new() -> Self {
         Node {
             children: vec![0, 0],
             v: [0.0; N],
@@ -23,10 +23,46 @@ impl<const N: usize> Node<N> {
             a: 0.0,
         }
     }
+    
+    fn reset(&mut self, v: [f64; N]) {
+        self.children[0] = 0;
+        self.children[1] = 0;
+        self.n_descendants = 1;
+        self.v = v;
+    }
+
+    fn descendant(&self) -> usize {
+        self.n_descendants
+    }
+
+    fn set_descendant(&mut self, other: usize) {
+        self.n_descendants = other;
+    }
+
+    fn vector(&self) -> [f64; N] {
+        self.v
+    }
+
+    fn children(&self) -> Vec<i64> {
+        self.children.clone()
+    }
+    
+    fn set_children(&mut self, other: Vec<i64>) {
+        self.children = other;
+    }
+
+    fn copy(&mut self, other: Self) {
+        self.n_descendants = other.n_descendants;
+        self.children = other.children;
+        self.v = other.v;
+        self.a = other.a;
+    }
 }
 
-impl Euclidean {
-    fn margin<const N: usize>(n: &Node<N>, y: [f64; N]) -> f64 {
+impl<const N: usize> Distance<N> for Euclidean {
+    type Node = Node<N>;
+    
+    fn margin(n: &Self::Node, y: [f64; N]) -> f64 {
         let mut dot: f64 = n.a;
 
         for z in 0..N {
@@ -35,10 +71,6 @@ impl Euclidean {
 
         dot
     }
-}
-
-impl<const N: usize> Distance<N> for Euclidean {
-    type Node = Node<N>;
 
     fn side(n: &Self::Node, y: [f64; N]) -> bool {
         let dot = Self::margin(n, y);

@@ -1,9 +1,10 @@
 use std::cmp::Ordering;
 
-mod node;
+//mod node;
 mod distance;
 pub mod ann;
 
+pub use distance::Euclidean;
 pub use ann::Annoy;
 
 #[derive(PartialEq)]

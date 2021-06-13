@@ -1,7 +1,7 @@
 use little_annoy::{ Annoy, Euclidean };
 
 fn main() {
-    let mut ann = Annoy::new();
+    let mut ann: Annoy<Euclidean, 2> = Annoy::new();
     
     ann.add_item(0, [1.0, 1.0]);
     ann.add_item(1, [5.0, 5.0]);
@@ -14,7 +14,7 @@ fn main() {
 
     ann.build(100);
 
-    let (result, distance) = ann.get_nns_by_vector::<Euclidean>([1.0, 1.0], 5, -1);
+    let (result, distance) = ann.get_nns_by_vector([1.0, 1.0], 5, -1);
    
     for (i, id) in result.iter().enumerate() {
         println!("result = {}, distance = {}", *id, distance[i]);
