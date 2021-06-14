@@ -1,8 +1,8 @@
 use std::cmp::Ordering;
 
 //mod node;
-mod distance;
 pub mod ann;
+mod distance;
 
 pub use distance::Euclidean;
 pub use distance::Hamming;

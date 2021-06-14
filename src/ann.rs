@@ -1,15 +1,18 @@
-use std::usize;
+use crate::distance::{Distance, NodeImpl};
+use crate::{random_flip, Numeric};
 use std::collections::BinaryHeap;
 use std::collections::HashMap;
-use crate::distance::{ NodeImpl, Distance };
-use crate::{ Numeric, random_flip };
+use std::usize;
 
 #[derive(Debug)]
-pub struct Annoy<D, const N: usize> where D: Distance<N> {
+pub struct Annoy<D, const N: usize>
+where
+    D: Distance<N>,
+{
     pub _K: usize,
     pub _n_nodes: i64,
     pub _n_items: i64,
-    
+
     pub _nodes: HashMap<i64, D::Node>,
     pub _roots: Vec<i64>,
 }
@@ -24,11 +27,11 @@ impl<D: Distance<N>, const N: usize> Annoy<D, N> {
             _K: 6,
         }
     }
-    
+
     pub fn add_item(&mut self, item: i64, w: [f64; N]) {
         let n = self._nodes.entry(item).or_insert(D::Node::new());
         n.reset(w);
-        
+
         if item >= self._n_items {
             self._n_items = item + 1;
         }
@@ -44,7 +47,7 @@ impl<D: Distance<N>, const N: usize> Annoy<D, N> {
             if q != -1 && self._roots.len() >= (q as usize) {
                 break;
             }
-            
+
             let mut indices: Vec<i64> = Vec::new();
             for i in 0..self._n_items {
                 if let Some(n) = self._nodes.get(&i) {
@@ -53,37 +56,48 @@ impl<D: Distance<N>, const N: usize> Annoy<D, N> {
                     }
                 }
             }
-            
+
             let ind = self._make_tree(&indices);
 
             self._roots.push(ind);
         }
     }
-    
-    pub fn get_nns_by_vector(&mut self, v: [f64; N], n: usize, search_k: i64) -> (Vec<i64>, Vec<f64>) where D: Distance<N> {
-        self._get_all_nns(v, n, search_k) 
+
+    pub fn get_nns_by_vector(
+        &mut self,
+        v: [f64; N],
+        n: usize,
+        search_k: i64,
+    ) -> (Vec<i64>, Vec<f64>)
+    where
+        D: Distance<N>,
+    {
+        self._get_all_nns(v, n, search_k)
     }
 
-    pub fn get_nns_by_item(&mut self, item: i64, n: usize, search_k: i64) -> (Vec<i64>, Vec<f64>) where D: Distance<N> {
+    pub fn get_nns_by_item(&mut self, item: i64, n: usize, search_k: i64) -> (Vec<i64>, Vec<f64>)
+    where
+        D: Distance<N>,
+    {
         let m = self._nodes.get(&item).unwrap();
         let v = m.vector();
 
-        self._get_all_nns(v, n, search_k) 
+        self._get_all_nns(v, n, search_k)
     }
 
     fn _make_tree(&mut self, indices: &Vec<i64>) -> i64 {
         if indices.len() == 1 {
             return indices[0];
         }
-        
+
         if indices.len() <= (self._K as usize) {
             let item = self._n_nodes;
             self._n_nodes = self._n_nodes + 1;
-    
+
             let m = self._nodes.entry(item).or_insert(D::Node::new());
             m.set_descendant(indices.len());
             m.set_children(indices.clone());
-            
+
             return item;
         }
 
@@ -112,7 +126,9 @@ impl<D: Distance<N>, const N: usize> Annoy<D, N> {
             children_indices[0].clear();
             children_indices[1].clear();
 
-            indices.into_iter().for_each(|j| children_indices[random_flip() as usize].push(*j));
+            indices
+                .into_iter()
+                .for_each(|j| children_indices[random_flip() as usize].push(*j));
         }
 
         let flip = if children_indices[0].len() > children_indices[1].len() {
@@ -130,33 +146,36 @@ impl<D: Distance<N>, const N: usize> Annoy<D, N> {
             v[ii] = self._make_tree(a);
             m.set_children(v);
         }
-        
+
         let item = self._n_nodes;
         self._n_nodes = self._n_nodes + 1;
-        
+
         let e = self._nodes.entry(item).or_insert(D::Node::new());
         e.copy(m);
 
         return item;
     }
 
-    fn _get_all_nns(&mut self, v: [f64; N], n: usize, mut search_k: i64) -> (Vec<i64>, Vec<f64>) where D: Distance<N> {
+    fn _get_all_nns(&mut self, v: [f64; N], n: usize, mut search_k: i64) -> (Vec<i64>, Vec<f64>)
+    where
+        D: Distance<N>,
+    {
         let mut q: BinaryHeap<(Numeric, i64)> = BinaryHeap::new();
-        
+
         if search_k == -1 {
-            search_k = (n as i64) * self._roots.len() as i64; 
+            search_k = (n as i64) * self._roots.len() as i64;
         }
 
         for root in self._roots.iter() {
             q.push((Numeric(std::f64::INFINITY), *root))
         }
 
-        let mut nns: Vec<i64> =  Vec::new();
+        let mut nns: Vec<i64> = Vec::new();
         while nns.len() < (search_k as usize) && !q.is_empty() {
             let top = q.peek().unwrap();
-            let d = top.0.0;
+            let d = top.0 .0;
             let i = top.1;
-            
+
             let nd = self._nodes.entry(i).or_insert(D::Node::new());
             q.pop();
 
@@ -168,8 +187,8 @@ impl<D: Distance<N>, const N: usize> Annoy<D, N> {
             } else {
                 let margin = D::margin(nd, v);
 
-                q.push((Numeric(d.min(0.0+margin)), nd.children()[1]));
-                q.push((Numeric(d.min(0.0-margin)), nd.children()[0]));
+                q.push((Numeric(d.min(0.0 + margin)), nd.children()[1]));
+                q.push((Numeric(d.min(0.0 - margin)), nd.children()[0]));
             }
         }
 
@@ -191,11 +210,7 @@ impl<D: Distance<N>, const N: usize> Annoy<D, N> {
         }
 
         let m = nns_dist.len();
-        let p = if n < m {
-            n
-        } else {
-            m
-        } as usize;
+        let p = if n < m { n } else { m } as usize;
 
         nns_dist.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
 

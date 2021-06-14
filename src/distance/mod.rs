@@ -6,9 +6,9 @@ pub mod hamming;
 pub use euclidean::Euclidean;
 pub use hamming::Hamming;
 
-fn get_norm<const N: usize>(v: [f64; N]) -> f64{
+fn get_norm<const N: usize>(v: [f64; N]) -> f64 {
     let mut sq_norm = 0.0;
-    
+
     for z in 0..N {
         sq_norm += v[z as usize] * v[z as usize];
     }
@@ -29,14 +29,14 @@ const ITERATION_STEPS: usize = 200;
 fn two_means<D: Distance<N>, const N: usize>(nodes: Vec<D::Node>) -> ([f64; N], [f64; N]) {
     let count = nodes.len();
     let i: u64 = rand::random::<u64>() % count as u64;
-    let mut j : u64 = rand::random::<u64>() % (count - 1) as u64;
+    let mut j: u64 = rand::random::<u64>() % (count - 1) as u64;
     j += (j >= i) as u64;
     let mut iv = nodes[i as usize].vector();
     let mut jv = nodes[j as usize].vector();
 
     let mut ic = 1.0;
     let mut jc = 1.0;
-    
+
     for _ in 0..ITERATION_STEPS {
         let k = rand::random::<usize>() % count as usize;
         let di = ic * D::distance(iv, nodes[k].vector());
@@ -68,11 +68,11 @@ pub trait NodeImpl<const N: usize> {
 
     fn descendant(&self) -> usize;
     fn set_descendant(&mut self, other: usize);
-   
+
     fn vector(&self) -> [f64; N];
     fn set_vector(&self, _other: [f64; N]) {}
-    
-    fn children(&self) -> Vec<i64>; 
+
+    fn children(&self) -> Vec<i64>;
     fn set_children(&mut self, other: Vec<i64>);
 }
 
@@ -82,8 +82,8 @@ pub trait Distance<const N: usize> {
     fn distance(x: [f64; N], y: [f64; N]) -> f64;
 
     fn create_split(nodes: Vec<Self::Node>, n: &mut Self::Node);
-    
+
     fn side(n: &Self::Node, y: [f64; N]) -> bool;
-    
-    fn margin(n: &Self::Node, y: [f64; N]) -> f64 ;
+
+    fn margin(n: &Self::Node, y: [f64; N]) -> f64;
 }

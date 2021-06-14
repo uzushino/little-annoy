@@ -1,7 +1,7 @@
+use little_annoy::{Annoy, Euclidean};
 use mnist::{Mnist, MnistBuilder};
-use rulinalg::matrix::{BaseMatrix, Matrix};
-use little_annoy::{ Annoy, Euclidean };
 use rand::Rng;
+use rulinalg::matrix::{BaseMatrix, Matrix};
 
 use std::convert::TryInto;
 
@@ -26,10 +26,17 @@ fn load_mnist(
     (lbl[index], img)
 }
 
-fn train<const N: usize>(ann: &mut Annoy<Euclidean, N>, size: u32, img: &Vec<u8>, lbl: &Vec<u8>, rows: u32, cols: u32) {
+fn train<const N: usize>(
+    ann: &mut Annoy<Euclidean, N>,
+    size: u32,
+    img: &Vec<u8>,
+    lbl: &Vec<u8>,
+    rows: u32,
+    cols: u32,
+) {
     println!("Load mnist data.");
 
-    for i in 0..size{
+    for i in 0..size {
         let (_, img) = load_mnist(size, rows, cols, &img, &lbl, i as usize);
 
         let img_to_vec = img
@@ -86,8 +93,8 @@ fn main() {
             .into_iter()
             .map(|v| v as f64)
             .collect::<Vec<_>>();
-        
-        let arr = vec_to_fixed_slice(img_to_vec) as [f64; 28*28];
+
+        let arr = vec_to_fixed_slice(img_to_vec) as [f64; 28 * 28];
         let (result, _distance) = ann.get_nns_by_vector(arr, 1, -1);
 
         let actual = result

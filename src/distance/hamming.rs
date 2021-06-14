@@ -1,7 +1,7 @@
-use crate::distance::{ two_means, normalize, Distance, NodeImpl };
+use crate::distance::{normalize, two_means, Distance, NodeImpl};
 use crate::random_flip;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 pub struct Hamming {}
 
@@ -20,7 +20,7 @@ impl<const N: usize> NodeImpl<N> for Node<N> {
             n_descendants: 0,
         }
     }
-    
+
     fn reset(&mut self, v: [f64; N]) {
         self.children[0] = 0;
         self.children[1] = 0;
@@ -43,7 +43,7 @@ impl<const N: usize> NodeImpl<N> for Node<N> {
     fn children(&self) -> Vec<i64> {
         self.children.clone()
     }
-    
+
     fn set_children(&mut self, other: Vec<i64>) {
         self.children = other;
     }
@@ -59,11 +59,12 @@ const MAX_ITERATIONS: usize = 20;
 
 impl<const N: usize> Distance<N> for Hamming {
     type Node = Node<N>;
-    
+
     fn margin(n: &Self::Node, y: [f64; N]) -> f64 {
         let n_bits = 4 * 8 as u64;
         let chunk = n.v[0] as u64 / n_bits;
-        let r = (y[chunk as usize] as i64) & (1 << (n_bits - 1 - (n.v[0] as u64 % n_bits)) != 0) as i64;
+        let r =
+            (y[chunk as usize] as i64) & (1 << (n_bits - 1 - (n.v[0] as u64 % n_bits)) != 0) as i64;
         r as f64
     }
 
@@ -98,7 +99,7 @@ impl<const N: usize> Distance<N> for Hamming {
             }
 
             if cur_size > 0 && cur_size < nodes.len() {
-                break
+                break;
             }
 
             i += 1;
@@ -107,7 +108,7 @@ impl<const N: usize> Distance<N> for Hamming {
         if i == MAX_ITERATIONS {
             for j in 0..N {
                 n.v[0] = j as f64;
-                cur_size = 0 ;
+                cur_size = 0;
 
                 for node in nodes.iter() {
                     if Self::side(node, n.v) {
@@ -116,7 +117,7 @@ impl<const N: usize> Distance<N> for Hamming {
                 }
 
                 if cur_size > 0 && cur_size < nodes.len() {
-                    break
+                    break;
                 }
             }
         }

@@ -1,7 +1,7 @@
-use crate::distance::{ two_means, normalize, Distance, NodeImpl };
+use crate::distance::{normalize, two_means, Distance, NodeImpl};
 use crate::random_flip;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 pub struct Euclidean {}
 
@@ -23,7 +23,7 @@ impl<const N: usize> NodeImpl<N> for Node<N> {
             a: 0.0,
         }
     }
-    
+
     fn reset(&mut self, v: [f64; N]) {
         self.children[0] = 0;
         self.children[1] = 0;
@@ -46,7 +46,7 @@ impl<const N: usize> NodeImpl<N> for Node<N> {
     fn children(&self) -> Vec<i64> {
         self.children.clone()
     }
-    
+
     fn set_children(&mut self, other: Vec<i64>) {
         self.children = other;
     }
@@ -61,7 +61,7 @@ impl<const N: usize> NodeImpl<N> for Node<N> {
 
 impl<const N: usize> Distance<N> for Euclidean {
     type Node = Node<N>;
-    
+
     fn margin(n: &Self::Node, y: [f64; N]) -> f64 {
         let mut dot: f64 = n.a;
 
@@ -85,7 +85,7 @@ impl<const N: usize> Distance<N> for Euclidean {
     fn distance(x: [f64; N], y: [f64; N]) -> f64 {
         let mut d = 0.0;
         for i in 0..N {
-            d += ((x[i as usize] - y[i as usize])) * ((x[i as usize] - y[i as usize]));
+            d += (x[i as usize] - y[i as usize]) * (x[i as usize] - y[i as usize]);
         }
         d
     }
@@ -100,7 +100,7 @@ impl<const N: usize> Distance<N> for Euclidean {
         normalize(&mut n.v);
 
         n.a = 0.0;
-        
+
         for z in 0..N {
             n.a += -n.v[z] * (best_iv[z] + best_jv[z]) / 2.0;
         }
