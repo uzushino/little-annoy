@@ -1,11 +1,11 @@
 use std::cmp::Ordering;
 
-mod node;
+//mod node;
 mod distance;
 pub mod ann;
 
-pub use ann::Annoy;
 pub use distance::Euclidean;
+pub use ann::Annoy;
 
 #[derive(PartialEq)]
 struct Numeric(f64);

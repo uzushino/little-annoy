@@ -1,23 +1,20 @@
 use std::usize;
 use std::collections::BinaryHeap;
 use std::collections::HashMap;
-use serde::{Serialize, Deserialize};
-
-use crate::distance::{ Euclidean, Distance };
-use crate::node::Node;
+use crate::distance::{ NodeImpl, Distance };
 use crate::{ Numeric, random_flip };
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Annoy<const N: usize> {
+#[derive(Debug)]
+pub struct Annoy<D, const N: usize> where D: Distance<N> {
     pub _K: usize,
     pub _n_nodes: i64,
     pub _n_items: i64,
     
-    pub _nodes: HashMap<i64, Node<N>>,
+    pub _nodes: HashMap<i64, D::Node>,
     pub _roots: Vec<i64>,
 }
 
-impl<const N: usize> Annoy<N> {
+impl<D: Distance<N>, const N: usize> Annoy<D, N> {
     pub fn new() -> Self {
         Self {
             _roots: Vec::new(),
@@ -29,12 +26,8 @@ impl<const N: usize> Annoy<N> {
     }
     
     pub fn add_item(&mut self, item: i64, w: [f64; N]) {
-        let mut n = self._nodes.entry(item).or_insert(Node::new());
-       
-        n.children[0] = 0;
-        n.children[1] = 0;
-        n.n_descendants = 1;
-        n.v = w;
+        let n = self._nodes.entry(item).or_insert(D::Node::new());
+        n.reset(w);
         
         if item >= self._n_items {
             self._n_items = item + 1;
@@ -55,45 +48,46 @@ impl<const N: usize> Annoy<N> {
             let mut indices: Vec<i64> = Vec::new();
             for i in 0..self._n_items {
                 if let Some(n) = self._nodes.get(&i) {
-                    if n.n_descendants >= 1 {
+                    if n.descendant() >= 1 {
                         indices.push(i)
                     }
                 }
             }
             
-            let ind = self._make_tree::<Euclidean>(&indices);
+            let ind = self._make_tree(&indices);
 
             self._roots.push(ind);
         }
     }
     
-    pub fn get_nns_by_vector<D>(&mut self, v: [f64; N], n: usize, search_k: i64) -> (Vec<i64>, Vec<f64>) where D: Distance {
-        self._get_all_nns::<D>(v, n, search_k) 
+    pub fn get_nns_by_vector(&mut self, v: [f64; N], n: usize, search_k: i64) -> (Vec<i64>, Vec<f64>) where D: Distance<N> {
+        self._get_all_nns(v, n, search_k) 
     }
 
-    pub fn get_nns_by_item<D>(&mut self, item: i64, n: usize, search_k: i64) -> (Vec<i64>, Vec<f64>) where D: Distance {
+    pub fn get_nns_by_item(&mut self, item: i64, n: usize, search_k: i64) -> (Vec<i64>, Vec<f64>) where D: Distance<N> {
         let m = self._nodes.get(&item).unwrap();
-        let v = m.v;
-        self._get_all_nns::<D>(v, n, search_k) 
+        let v = m.vector();
+
+        self._get_all_nns(v, n, search_k) 
     }
 
-    fn _make_tree<D>(&mut self, indices: &Vec<i64>) -> i64 where D: Distance {
+    fn _make_tree(&mut self, indices: &Vec<i64>) -> i64 {
         if indices.len() == 1 {
             return indices[0];
         }
-            
+        
         if indices.len() <= (self._K as usize) {
             let item = self._n_nodes;
             self._n_nodes = self._n_nodes + 1;
     
-            let m = self._nodes.entry(item).or_insert(Node::new());
-            m.n_descendants = indices.len();
-            m.children = indices.clone();
+            let m = self._nodes.entry(item).or_insert(D::Node::new());
+            m.set_descendant(indices.len());
+            m.set_children(indices.clone());
             
             return item;
         }
 
-        let mut children: Vec<Node<N>> = Vec::default();
+        let mut children: Vec<D::Node> = Vec::default();
         indices.iter().for_each(|j| {
             if let Some(n) = self._nodes.get(&j) {
                 children.push(n.clone());
@@ -101,14 +95,15 @@ impl<const N: usize> Annoy<N> {
         });
 
         let children_indices = &mut [Vec::new(), Vec::new()];
-        let mut m = Node::new();
+        let mut m = D::Node::new();
+
         D::create_split(children, &mut m);
 
         for i in 0..indices.len() {
             let j = indices[i];
 
             if let Some(n) = self._nodes.get(&j) {
-                let side = D::side(&m, n.v);
+                let side = D::side(&m, n.vector());
                 children_indices[side as usize].push(j);
             }
         }
@@ -126,27 +121,26 @@ impl<const N: usize> Annoy<N> {
             0
         };
 
-        m.n_descendants = indices.len();
+        m.set_descendant(indices.len());
 
         for side in 0..2 {
             let ii = side ^ flip;
             let a = &children_indices[ii];
-            m.children[ii] = self._make_tree::<D>(a);
+            let mut v = m.children();
+            v[ii] = self._make_tree(a);
+            m.set_children(v);
         }
         
         let item = self._n_nodes;
         self._n_nodes = self._n_nodes + 1;
         
-        let mut e = self._nodes.entry(item).or_insert(Node::new());
-        e.n_descendants = m.n_descendants;
-        e.children = m.children;
-        e.v = m.v;
-        e.a = m.a;
+        let e = self._nodes.entry(item).or_insert(D::Node::new());
+        e.copy(m);
 
         return item;
     }
 
-    fn _get_all_nns<D>(&mut self, v: [f64; N], n: usize, mut search_k: i64) -> (Vec<i64>, Vec<f64>) where D: Distance {
+    fn _get_all_nns(&mut self, v: [f64; N], n: usize, mut search_k: i64) -> (Vec<i64>, Vec<f64>) where D: Distance<N> {
         let mut q: BinaryHeap<(Numeric, i64)> = BinaryHeap::new();
         
         if search_k == -1 {
@@ -163,19 +157,19 @@ impl<const N: usize> Annoy<N> {
             let d = top.0.0;
             let i = top.1;
             
-            let nd = self._nodes.entry(i).or_insert(Node::new());
+            let nd = self._nodes.entry(i).or_insert(D::Node::new());
             q.pop();
 
-            if nd.n_descendants == 1 && i < self._n_items {
+            if nd.descendant() == 1 && i < self._n_items {
                 nns.push(i);
-            } else if nd.n_descendants <= self._K {
-                let dst = nd.children.clone();
+            } else if nd.descendant() as usize <= self._K {
+                let dst = nd.children();
                 nns.extend(dst);
             } else {
                 let margin = D::margin(nd, v);
 
-                q.push((Numeric(d.min(0.0+margin)), nd.children[1]));
-                q.push((Numeric(d.min(0.0-margin)), nd.children[0]));
+                q.push((Numeric(d.min(0.0+margin)), nd.children()[1]));
+                q.push((Numeric(d.min(0.0-margin)), nd.children()[0]));
             }
         }
 
@@ -191,8 +185,8 @@ impl<const N: usize> Annoy<N> {
             }
 
             last = j;
-            let mut _n = self._nodes.entry(j).or_insert(Node::new());
-            let dist = D::distance(v, _n.v);
+            let mut _n = self._nodes.entry(j).or_insert(D::Node::new());
+            let dist = D::distance(v, _n.vector());
             nns_dist.push((dist, j));
         }
 
