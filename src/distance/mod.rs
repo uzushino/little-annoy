@@ -4,6 +4,7 @@ pub mod euclidean;
 pub mod hamming;
 
 pub use euclidean::Euclidean;
+pub use hamming::Hamming;
 
 fn get_norm<const N: usize>(v: [f64; N]) -> f64{
     let mut sq_norm = 0.0;

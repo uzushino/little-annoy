@@ -5,6 +5,8 @@ mod distance;
 pub mod ann;
 
 pub use distance::Euclidean;
+pub use distance::Hamming;
+
 pub use ann::Annoy;
 
 #[derive(PartialEq)]

@@ -26,7 +26,7 @@ fn load_mnist(
     (lbl[index], img)
 }
 
-fn train<const N: usize>(ann: &mut Annoy<N>, size: u32, img: &Vec<u8>, lbl: &Vec<u8>, rows: u32, cols: u32) {
+fn train<const N: usize>(ann: &mut Annoy<Euclidean, N>, size: u32, img: &Vec<u8>, lbl: &Vec<u8>, rows: u32, cols: u32) {
     println!("Load mnist data.");
 
     for i in 0..size{
@@ -88,7 +88,7 @@ fn main() {
             .collect::<Vec<_>>();
         
         let arr = vec_to_fixed_slice(img_to_vec) as [f64; 28*28];
-        let (result, _distance) = ann.get_nns_by_vector::<Euclidean>(arr, 1, -1);
+        let (result, _distance) = ann.get_nns_by_vector(arr, 1, -1);
 
         let actual = result
             .into_iter()
