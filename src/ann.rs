@@ -218,7 +218,7 @@ impl<D: Distance<N>, const N: usize> Annoy<D, N> {
         let mut result = Vec::new();
 
         for i in 0..p {
-            distances.push(nns_dist[i].0);
+            distances.push(D::normalized_distance(nns_dist[i].0));
             result.push(nns_dist[i].1)
         }
 

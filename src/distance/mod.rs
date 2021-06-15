@@ -2,6 +2,7 @@
 
 pub mod euclidean;
 pub mod hamming;
+pub mod manhattan;
 
 pub use euclidean::Euclidean;
 pub use hamming::Hamming;
@@ -86,4 +87,6 @@ pub trait Distance<const N: usize> {
     fn side(n: &Self::Node, y: [f64; N]) -> bool;
 
     fn margin(n: &Self::Node, y: [f64; N]) -> f64;
+
+    fn normalized_distance(distance: f64) -> f64;
 }

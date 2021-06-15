@@ -1,12 +1,14 @@
-use crate::distance::{Distance, NodeImpl};
+use crate::distance::{normalize, two_means, Distance, NodeImpl};
+use crate::random_flip;
 
-pub struct Hamming {}
+pub struct Manhattan {}
 
 #[derive(Debug, Clone)]
 pub struct Node<const N: usize> {
     pub children: Vec<i64>,
     pub v: [f64; N],
     pub n_descendants: usize,
+    pub a: f64,
 }
 
 impl<const N: usize> NodeImpl<N> for Node<N> {
@@ -15,6 +17,7 @@ impl<const N: usize> NodeImpl<N> for Node<N> {
             children: vec![0, 0],
             v: [0.0; N],
             n_descendants: 0,
+            a: 0.0,
         }
     }
 
@@ -49,78 +52,60 @@ impl<const N: usize> NodeImpl<N> for Node<N> {
         self.n_descendants = other.n_descendants;
         self.children = other.children;
         self.v = other.v;
+        self.a = other.a;
     }
 }
 
-const MAX_ITERATIONS: usize = 20;
-
-impl<const N: usize> Distance<N> for Hamming {
+impl<const N: usize> Distance<N> for Manhattan {
     type Node = Node<N>;
 
     fn margin(n: &Self::Node, y: [f64; N]) -> f64 {
-        let n_bits = 4 * 8 as u64;
-        let chunk = n.v[0] as u64 / n_bits;
-        let r =
-            (y[chunk as usize] as i64) & (1 << (n_bits - 1 - (n.v[0] as u64 % n_bits)) != 0) as i64;
-        r as f64
+        let mut dot: f64 = n.a;
+
+        for z in 0..N {
+            dot += n.v[z as usize] * y[z as usize];
+        }
+
+        dot
     }
 
     fn side(n: &Self::Node, y: [f64; N]) -> bool {
-        if Self::margin(n, y) > 0.0 {
-            return true;
+        let dot = Self::margin(n, y);
+
+        if dot != 0.0 {
+            return dot > 0.0;
         }
-        false
+
+        random_flip()
     }
 
     fn distance(x: [f64; N], y: [f64; N]) -> f64 {
-        let mut dist = 0;
+        let mut d = 0.0;
 
         for i in 0..N {
-            dist += ((x[i] as u64) ^ (y[i] as u64)).count_ones();
+            d += (x[i as usize] - y[i as usize]).abs();
         }
-
-        dist as f64
+	    
+        d
     }
     
     fn normalized_distance(distance: f64) -> f64 {
-        distance
+        distance.max(0.0)
     }
 
     fn create_split(nodes: Vec<Self::Node>, n: &mut Self::Node) {
-        let mut cur_size = 0;
-        let mut i = 0;
-        for _ in 0..MAX_ITERATIONS {
-            n.v[0] = (rand::random::<usize>() % N) as f64;
-            cur_size = 0;
+        let (best_iv, best_jv) = two_means::<Manhattan, N>(nodes);
 
-            for node in nodes.iter() {
-                if Self::side(node, n.v) {
-                    cur_size += 1;
-                }
-            }
-
-            if cur_size > 0 && cur_size < nodes.len() {
-                break;
-            }
-
-            i += 1;
+        for z in 0..N {
+            n.v[z] = best_iv[z] - best_jv[z];
         }
 
-        if i == MAX_ITERATIONS {
-            for j in 0..N {
-                n.v[0] = j as f64;
-                cur_size = 0;
+        normalize(&mut n.v);
 
-                for node in nodes.iter() {
-                    if Self::side(node, n.v) {
-                        cur_size += 1;
-                    }
-                }
+        n.a = 0.0;
 
-                if cur_size > 0 && cur_size < nodes.len() {
-                    break;
-                }
-            }
+        for z in 0..N {
+            n.a += -n.v[z] * (best_iv[z] + best_jv[z]) / 2.0;
         }
     }
 }

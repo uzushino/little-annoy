@@ -1,3 +1,5 @@
+use std::cmp::max;
+
 use crate::distance::{normalize, two_means, Distance, NodeImpl};
 use crate::random_flip;
 
@@ -88,6 +90,10 @@ impl<const N: usize> Distance<N> for Euclidean {
             d += (x[i as usize] - y[i as usize]) * (x[i as usize] - y[i as usize]);
         }
         d
+    }
+
+    fn normalized_distance(distance: f64) -> f64 {
+        distance.max(0.0).sqrt()
     }
 
     fn create_split(nodes: Vec<Self::Node>, n: &mut Self::Node) {
