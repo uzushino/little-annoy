@@ -81,7 +81,7 @@ impl<const N: usize> Distance<N> for Hamming {
 
         dist as f64
     }
-    
+
     fn normalized_distance(distance: f64) -> f64 {
         distance
     }

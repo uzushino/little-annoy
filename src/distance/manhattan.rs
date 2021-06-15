@@ -85,10 +85,10 @@ impl<const N: usize> Distance<N> for Manhattan {
         for i in 0..N {
             d += (x[i as usize] - y[i as usize]).abs();
         }
-	    
+
         d
     }
-    
+
     fn normalized_distance(distance: f64) -> f64 {
         distance.max(0.0)
     }
