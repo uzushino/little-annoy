@@ -6,7 +6,7 @@ use rulinalg::matrix::{BaseMatrix, Matrix};
 use std::convert::TryInto;
 
 fn vec_to_fixed_slice<T: Copy + Default, const N: usize>(v: Vec<T>) -> [T; N] {
-    v.try_into().unwrap_or_else(|v: Vec<T>| [T::default(); N])
+    v.try_into().unwrap_or_else(|_| [T::default(); N])
 }
 
 fn load_mnist(

@@ -1,5 +1,3 @@
-use std::cmp::max;
-
 use crate::distance::{normalize, two_means, Distance, NodeImpl};
 use crate::random_flip;
 
