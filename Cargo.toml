@@ -16,6 +16,9 @@ serde_json = "1.0"
 mnist = "0.4.1"
 rulinalg = "*"
 criterion = "0.3"
+img_hash = "3.0"
+image = "*"
+bit-vec = "*"
 
 [[bench]]
 name = "bench_main"
