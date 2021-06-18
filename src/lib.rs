@@ -1,6 +1,5 @@
 use std::cmp::Ordering;
 
-//mod node;
 pub mod ann;
 mod distance;
 
