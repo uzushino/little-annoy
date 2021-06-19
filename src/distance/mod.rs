@@ -1,11 +1,10 @@
 // use crate::node::Node;
-
 pub mod euclidean;
-pub mod hamming;
-pub mod manhattan;
+//pub mod hamming;
+//pub mod manhattan;
 
 pub use euclidean::Euclidean;
-pub use hamming::Hamming;
+//pub use hamming::Hamming;
 
 fn get_norm<const N: usize>(v: [f64; N]) -> f64 {
     let mut sq_norm = 0.0;
@@ -17,9 +16,9 @@ fn get_norm<const N: usize>(v: [f64; N]) -> f64 {
     sq_norm.sqrt()
 }
 
-fn normalize<const N: usize>(v: &mut [f64; N]) {
+fn normalize<T, const N: usize>(v: &mut [T; N]) {
     let norm = get_norm(*v);
-
+    
     for z in 0..N {
         v[z] /= norm;
     }
@@ -27,7 +26,7 @@ fn normalize<const N: usize>(v: &mut [f64; N]) {
 
 const ITERATION_STEPS: usize = 200;
 
-fn two_means<D: Distance<N>, const N: usize>(nodes: Vec<D::Node>) -> ([f64; N], [f64; N]) {
+fn two_means<T: num::Num, D: Distance<T, N>, const N: usize>(nodes: Vec<D::Node>) -> ([f64; N], [f64; N]) {
     let count = nodes.len();
     let i: u64 = rand::random::<u64>() % count as u64;
     let mut j: u64 = rand::random::<u64>() % (count - 1) as u64;
@@ -61,32 +60,32 @@ fn two_means<D: Distance<N>, const N: usize>(nodes: Vec<D::Node>) -> ([f64; N], 
     (iv, jv)
 }
 
-pub trait NodeImpl<const N: usize> {
+pub trait NodeImpl<T: num::Num, const N: usize> {
     fn new() -> Self;
 
-    fn reset(&mut self, w: [f64; N]);
+    fn reset(&mut self, w: [T; N]);
     fn copy(&mut self, other: Self);
 
     fn descendant(&self) -> usize;
     fn set_descendant(&mut self, other: usize);
 
-    fn vector(&self) -> [f64; N];
-    fn set_vector(&self, _other: [f64; N]) {}
+    fn vector(&self) -> [T; N];
+    fn set_vector(&self, _other: [T; N]) {}
 
     fn children(&self) -> Vec<i64>;
     fn set_children(&mut self, other: Vec<i64>);
 }
 
-pub trait Distance<const N: usize> {
-    type Node: NodeImpl<N> + Clone;
+pub trait Distance<T: num::Num, const N: usize> {
+    type Node: NodeImpl<T, N> + Clone;
 
-    fn distance(x: [f64; N], y: [f64; N]) -> f64;
+    fn distance(x: [T; N], y: [T; N]) -> f64;
 
     fn create_split(nodes: Vec<Self::Node>, n: &mut Self::Node);
 
-    fn side(n: &Self::Node, y: [f64; N]) -> bool;
+    fn side(n: &Self::Node, y: [T; N]) -> bool;
 
-    fn margin(n: &Self::Node, y: [f64; N]) -> f64;
+    fn margin(n: &Self::Node, y: [T; N]) -> f64;
 
     fn normalized_distance(distance: f64) -> f64;
 }

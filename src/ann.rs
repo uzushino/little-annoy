@@ -3,11 +3,12 @@ use crate::{random_flip, Numeric};
 use std::collections::BinaryHeap;
 use std::collections::HashMap;
 use std::usize;
+use std::marker::PhantomData;
 
 #[derive(Debug)]
-pub struct Annoy<D, const N: usize>
+pub struct Annoy<T: num::Num, D, const N: usize>
 where
-    D: Distance<N>,
+    D: Distance<T, N>,
 {
     pub _K: usize,
     pub _n_nodes: i64,
@@ -15,9 +16,11 @@ where
 
     pub _nodes: HashMap<i64, D::Node>,
     pub _roots: Vec<i64>,
+
+    pub t: PhantomData<T>,
 }
 
-impl<D: Distance<N>, const N: usize> Annoy<D, N> {
+impl<T: num::Num + Ord, D: Distance<T, N>, const N: usize> Annoy<T, D, N> {
     pub fn new() -> Self {
         Self {
             _roots: Vec::new(),
@@ -25,10 +28,11 @@ impl<D: Distance<N>, const N: usize> Annoy<D, N> {
             _n_items: 0,
             _n_nodes: 0,
             _K: 6,
+            t: PhantomData,
         }
     }
 
-    pub fn add_item(&mut self, item: i64, w: [f64; N]) {
+    pub fn add_item(&mut self, item: i64, w: [T; N]) {
         let n = self._nodes.entry(item).or_insert(D::Node::new());
         n.reset(w);
 
@@ -65,19 +69,19 @@ impl<D: Distance<N>, const N: usize> Annoy<D, N> {
 
     pub fn get_nns_by_vector(
         &mut self,
-        v: [f64; N],
+        v: [T; N],
         n: usize,
         search_k: i64,
     ) -> (Vec<i64>, Vec<f64>)
     where
-        D: Distance<N>,
+        D: Distance<T, N>,
     {
         self._get_all_nns(v, n, search_k)
     }
 
     pub fn get_nns_by_item(&mut self, item: i64, n: usize, search_k: i64) -> (Vec<i64>, Vec<f64>)
     where
-        D: Distance<N>,
+        D: Distance<T, N>,
     {
         let m = self._nodes.get(&item).unwrap();
         let v = m.vector();
@@ -156,18 +160,18 @@ impl<D: Distance<N>, const N: usize> Annoy<D, N> {
         return item;
     }
 
-    fn _get_all_nns(&mut self, v: [f64; N], n: usize, mut search_k: i64) -> (Vec<i64>, Vec<f64>)
+    fn _get_all_nns(&mut self, v: [T; N], n: usize, mut search_k: i64) -> (Vec<i64>, Vec<f64>)
     where
-        D: Distance<N>,
+        D: Distance<T, N>,
     {
-        let mut q: BinaryHeap<(Numeric, i64)> = BinaryHeap::new();
+        let mut q: BinaryHeap<(Numeric<f64>, i64)> = BinaryHeap::new();
 
         if search_k == -1 {
             search_k = (n as i64) * self._roots.len() as i64;
         }
 
         for root in self._roots.iter() {
-            q.push((Numeric(std::f64::INFINITY), *root))
+            q.push((Numeric(0.0), *root))
         }
 
         let mut nns: Vec<i64> = Vec::new();
@@ -194,7 +198,7 @@ impl<D: Distance<N>, const N: usize> Annoy<D, N> {
 
         nns.sort();
 
-        let mut nns_dist: Vec<(f64, i64)> = Vec::new();
+        let mut nns_dist = Vec::new();
         let mut last = -1;
 
         for i in 0..nns.len() {
@@ -214,7 +218,7 @@ impl<D: Distance<N>, const N: usize> Annoy<D, N> {
 
         nns_dist.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
 
-        let mut distances: Vec<f64> = Vec::new();
+        let mut distances = Vec::new();
         let mut result = Vec::new();
 
         for i in 0..p {
