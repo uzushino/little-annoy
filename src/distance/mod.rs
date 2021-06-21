@@ -16,7 +16,7 @@ fn get_norm<const N: usize>(v: [f64; N]) -> f64 {
     sq_norm.sqrt()
 }
 
-fn normalize<T, const N: usize>(v: &mut [T; N]) {
+fn normalize<T, const N: usize>(v: &mut [f64; N]) {
     let norm = get_norm(*v);
     
     for z in 0..N {
