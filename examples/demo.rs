@@ -1,7 +1,7 @@
 use little_annoy::{Annoy, Euclidean};
 
 fn main() {
-    let mut ann: Annoy<Euclidean, 2> = Annoy::new();
+    let mut ann: Annoy<f64, Euclidean, 2> = Annoy::new();
 
     ann.add_item(0, [1.0, 1.0]);
     ann.add_item(1, [5.0, 5.0]);

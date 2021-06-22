@@ -1,6 +1,6 @@
 use std::convert::TryInto;
 
-use crate::distance::{normalize, two_means, Distance, NodeImpl};
+use crate::distance::{normalize, two_means, Distance, NodeImpl, to_f64_slice};
 use crate::random_flip;
 
 use num::{FromPrimitive, ToPrimitive};
@@ -16,7 +16,7 @@ pub struct Node<T: num::Num, const N: usize> {
     pub a: f64,
 }
 
-impl<T: num::Num, const N: usize> NodeImpl<T, N> for Node<T, N> {
+impl<T: num::Num + Copy, const N: usize> NodeImpl<T, N> for Node<T, N> {
     fn new() -> Self {
         Node {
             children: vec![0, 0],
@@ -61,7 +61,7 @@ impl<T: num::Num, const N: usize> NodeImpl<T, N> for Node<T, N> {
     }
 }
 
-impl<T: num::Num + Clone + ToPrimitive + FromPrimitive, const N: usize> Distance<T, N> for Euclidean {
+impl<T: num::Num + Clone + ToPrimitive + FromPrimitive + Copy, const N: usize> Distance<T, N> for Euclidean {
     type Node = Node<T, N>;
 
     fn margin(n: &Self::Node, y: [T; N]) -> f64 {
@@ -108,7 +108,7 @@ impl<T: num::Num + Clone + ToPrimitive + FromPrimitive, const N: usize> Distance
             n.v[z] = T::from_f64(best).unwrap_or(T::zero());
         }
 
-        normalize(&mut n.v);
+        n.v = normalize(n.v);
 
         n.a = 0.0;
 

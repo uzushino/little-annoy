@@ -20,7 +20,7 @@ where
     pub t: PhantomData<T>,
 }
 
-impl<T: num::Num + Ord, D: Distance<T, N>, const N: usize> Annoy<T, D, N> {
+impl<T: num::Num + PartialOrd + Copy, D: Distance<T, N>, const N: usize> Annoy<T, D, N> {
     pub fn new() -> Self {
         Self {
             _roots: Vec::new(),

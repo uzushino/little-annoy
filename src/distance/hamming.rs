@@ -9,7 +9,7 @@ pub struct Node<const N: usize> {
     pub n_descendants: usize,
 }
 
-impl<const N: usize> NodeImpl<N> for Node<N> {
+impl<T: num::Num + Copy, const N: usize> NodeImpl<T, N> for Node<N> {
     fn new() -> Self {
         Node {
             children: vec![0, 0],
@@ -54,10 +54,10 @@ impl<const N: usize> NodeImpl<N> for Node<N> {
 
 const MAX_ITERATIONS: usize = 20;
 
-impl<const N: usize> Distance<N> for Hamming {
+impl<T: num::Num + Copy, const N: usize> Distance<T, N> for Hamming {
     type Node = Node<N>;
 
-    fn margin(n: &Self::Node, y: [f64; N]) -> f64 {
+    fn margin(n: &Self::Node, y: [T; N]) -> f64 {
         let n_bits = 4 * 8 as u64;
         let chunk = n.v[0] as u64 / n_bits;
         let r =
@@ -65,14 +65,14 @@ impl<const N: usize> Distance<N> for Hamming {
         r as f64
     }
 
-    fn side(n: &Self::Node, y: [f64; N]) -> bool {
+    fn side(n: &Self::Node, y: [T; N]) -> bool {
         if Self::margin(n, y) > 0.0 {
             return true;
         }
         false
     }
 
-    fn distance(x: [f64; N], y: [f64; N]) -> f64 {
+    fn distance(x: [T; N], y: [T; N]) -> f64 {
         let mut dist = 0;
 
         for i in 0..N {

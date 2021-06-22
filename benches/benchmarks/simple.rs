@@ -4,7 +4,7 @@ use little_annoy::{Annoy, Euclidean};
 use rand;
 
 pub fn build(c: &mut Criterion) {
-    let mut ann: Annoy<Euclidean, 2> = Annoy::new();
+    let mut ann: Annoy<f64, Euclidean, 2> = Annoy::new();
 
     ann.add_item(0, [1.0, 1.0]);
     ann.add_item(1, [5.0, 5.0]);
@@ -31,7 +31,7 @@ pub fn add_item(c: &mut Criterion) {
 
     c.bench_function("add_item 2", |b| {
         b.iter(|| {
-            let mut ann: Annoy<Euclidean, 2> = Annoy::new();
+            let mut ann: Annoy<f64, Euclidean, 2> = Annoy::new();
             for i in 0..100 {
                 ann.add_item(i, create_item::<2>());
             }
@@ -40,7 +40,7 @@ pub fn add_item(c: &mut Criterion) {
     });
     c.bench_function("add_item 100", |b| {
         b.iter(|| {
-            let mut ann: Annoy<Euclidean, 100> = Annoy::new();
+            let mut ann: Annoy<f64, Euclidean, 100> = Annoy::new();
             for i in 0..100 {
                 ann.add_item(i, create_item::<100>());
             }
@@ -49,7 +49,7 @@ pub fn add_item(c: &mut Criterion) {
     });
     c.bench_function("add_item 10_000", |b| {
         b.iter(|| {
-            let mut ann: Annoy<Euclidean, 10_000> = Annoy::new();
+            let mut ann: Annoy<f64, Euclidean, 10_000> = Annoy::new();
             for i in 0..100 {
                 ann.add_item(i, create_item::<10_000>());
             }
