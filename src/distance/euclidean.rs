@@ -1,10 +1,8 @@
-use std::convert::TryInto;
 
 use crate::distance::{normalize, two_means, Distance, NodeImpl, to_f64_slice};
 use crate::random_flip;
 
 use num::{FromPrimitive, ToPrimitive};
-use serde::{Deserialize, Serialize};
 
 pub struct Euclidean {}
 

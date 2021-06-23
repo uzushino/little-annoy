@@ -3,22 +3,22 @@ use crate::distance::{Distance, NodeImpl};
 pub struct Hamming {}
 
 #[derive(Debug, Clone)]
-pub struct Node<const N: usize> {
+pub struct Node<T: num::Num, const N: usize> {
     pub children: Vec<i64>,
-    pub v: [f64; N],
+    pub v: [T; N],
     pub n_descendants: usize,
 }
 
-impl<T: num::Num + Copy, const N: usize> NodeImpl<T, N> for Node<N> {
+impl<T: num::Num + Copy, const N: usize> NodeImpl<T, N> for Node<T, N> {
     fn new() -> Self {
         Node {
             children: vec![0, 0],
-            v: [0.0; N],
+            v: [T::zero(); N],
             n_descendants: 0,
         }
     }
 
-    fn reset(&mut self, v: [f64; N]) {
+    fn reset(&mut self, v: [T; N]) {
         self.children[0] = 0;
         self.children[1] = 0;
         self.n_descendants = 1;
@@ -33,7 +33,7 @@ impl<T: num::Num + Copy, const N: usize> NodeImpl<T, N> for Node<N> {
         self.n_descendants = other;
     }
 
-    fn vector(&self) -> [f64; N] {
+    fn vector(&self) -> [T; N] {
         self.v
     }
 
@@ -55,7 +55,7 @@ impl<T: num::Num + Copy, const N: usize> NodeImpl<T, N> for Node<N> {
 const MAX_ITERATIONS: usize = 20;
 
 impl<T: num::Num + Copy, const N: usize> Distance<T, N> for Hamming {
-    type Node = Node<N>;
+    type Node = Node<T, N>;
 
     fn margin(n: &Self::Node, y: [T; N]) -> f64 {
         let n_bits = 4 * 8 as u64;
@@ -108,7 +108,7 @@ impl<T: num::Num + Copy, const N: usize> Distance<T, N> for Hamming {
 
         if i == MAX_ITERATIONS {
             for j in 0..N {
-                n.v[0] = j as f64;
+                n.v[0] = j;
                 cur_size = 0;
 
                 for node in nodes.iter() {
