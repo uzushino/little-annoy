@@ -1,3 +1,5 @@
+use num::{FromPrimitive, ToPrimitive};
+
 use crate::distance::{Distance, NodeImpl};
 
 pub struct Hamming {}
@@ -54,14 +56,14 @@ impl<T: num::Num + Copy, const N: usize> NodeImpl<T, N> for Node<T, N> {
 
 const MAX_ITERATIONS: usize = 20;
 
-impl<T: num::Num + Copy, const N: usize> Distance<T, N> for Hamming {
+impl<T: num::Num + Copy + ToPrimitive + FromPrimitive, const N: usize> Distance<T, N> for Hamming {
     type Node = Node<T, N>;
 
     fn margin(n: &Self::Node, y: [T; N]) -> f64 {
         let n_bits = 4 * 8 as u64;
-        let chunk = n.v[0] as u64 / n_bits;
+        let chunk = n.v[0].to_u64().unwrap_or_default() / n_bits;
         let r =
-            (y[chunk as usize] as i64) & (1 << (n_bits - 1 - (n.v[0] as u64 % n_bits)) != 0) as i64;
+            (y[chunk as usize].to_i64().unwrap()) & (1 << (n_bits - 1 - (n.v[0].to_u64().unwrap() as u64 % n_bits)) != 0) as i64;
         r as f64
     }
 
@@ -76,7 +78,7 @@ impl<T: num::Num + Copy, const N: usize> Distance<T, N> for Hamming {
         let mut dist = 0;
 
         for i in 0..N {
-            dist += ((x[i] as u64) ^ (y[i] as u64)).count_ones();
+            dist += ((x[i].to_u64().unwrap() as u64) ^ (y[i].to_u64().unwrap() as u64)).count_ones();
         }
 
         dist as f64
@@ -90,7 +92,7 @@ impl<T: num::Num + Copy, const N: usize> Distance<T, N> for Hamming {
         let mut cur_size = 0;
         let mut i = 0;
         for _ in 0..MAX_ITERATIONS {
-            n.v[0] = (rand::random::<usize>() % N) as f64;
+            n.v[0] = T::from_u64((rand::random::<usize>() % N) as u64).unwrap();
             cur_size = 0;
 
             for node in nodes.iter() {
@@ -108,7 +110,8 @@ impl<T: num::Num + Copy, const N: usize> Distance<T, N> for Hamming {
 
         if i == MAX_ITERATIONS {
             for j in 0..N {
-                n.v[0] = j;
+                n.v[0] = T::from_usize(j).unwrap();
+                
                 cur_size = 0;
 
                 for node in nodes.iter() {
