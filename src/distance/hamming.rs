@@ -5,15 +5,15 @@ use crate::distance::{Distance, NodeImpl};
 pub struct Hamming {}
 
 #[derive(Debug, Clone)]
-pub struct HammingNode<const N: usize> {
+pub struct Node<const N: usize> {
     pub children: Vec<i64>,
     pub v: [u64; N],
     pub n_descendants: usize,
 }
 
-impl<const N: usize> NodeImpl<u64, N> for HammingNode<N> {
+impl<const N: usize> NodeImpl<u64, N> for Node<N> {
     fn new() -> Self {
-        HammingNode {
+        Node {
             children: vec![0, 0],
             v: [0; N],
             n_descendants: 0,
@@ -57,7 +57,7 @@ impl<const N: usize> NodeImpl<u64, N> for HammingNode<N> {
 const MAX_ITERATIONS: usize = 20;
 
 impl<const N: usize> Distance<u64, N> for Hamming {
-    type Node = HammingNode<N>;
+    type Node = Node<N>;
 
     fn margin(n: &Self::Node, y: [u64; N]) -> f64 {
         let n_bits = 4 * 8 as u64;

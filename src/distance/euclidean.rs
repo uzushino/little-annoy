@@ -7,27 +7,24 @@ use num::{FromPrimitive, ToPrimitive};
 pub struct Euclidean {}
 
 #[derive(Debug, Clone)]
-pub struct Node<T: num::Num, const N: usize> {
+pub struct Node<const N: usize> {
     pub children: Vec<i64>,
-    pub v: [T; N],
+    pub v: [f64; N],
     pub n_descendants: usize,
     pub a: f64,
 }
 
-impl<T: num::Num + Copy, const N: usize> NodeImpl<N> for Node<T, N> {
-
-
-
+impl<const N: usize> NodeImpl<f64, N> for Node<N> {
     fn new() -> Self {
         Node {
             children: vec![0, 0],
-            v: [T::zero(); N],
+            v: [0.0; N],
             n_descendants: 0,
             a: 0.,
         }
     }
 
-    fn reset(&mut self, v: [T; N]) {
+    fn reset(&mut self, v: [f64; N]) {
         self.children[0] = 0;
         self.children[1] = 0;
         self.n_descendants = 1;
@@ -42,7 +39,7 @@ impl<T: num::Num + Copy, const N: usize> NodeImpl<N> for Node<T, N> {
         self.n_descendants = other;
     }
 
-    fn vector(&self) -> [T; N] {
+    fn vector(&self) -> [f64; N] {
         self.v
     }
 
@@ -62,10 +59,10 @@ impl<T: num::Num + Copy, const N: usize> NodeImpl<N> for Node<T, N> {
     }
 }
 
-impl<T: num::Num + Clone + ToPrimitive + FromPrimitive + Copy, const N: usize> Distance<T, N> for Euclidean {
-    type Node = Node<T, N>;
+impl<const N: usize> Distance<f64, N> for Euclidean {
+    type Node = Node<N>;
 
-    fn margin(n: &Self::Node, y: [T; N]) -> f64 {
+    fn margin(n: &Self::Node, y: [f64; N]) -> f64 {
         let mut dot= n.a;
 
         for z in 0..N {
@@ -76,7 +73,7 @@ impl<T: num::Num + Clone + ToPrimitive + FromPrimitive + Copy, const N: usize> D
         dot
     }
 
-    fn side(n: &Self::Node, y: [T; N]) -> bool {
+    fn side(n: &Self::Node, y: [f64; N]) -> bool {
         let dot = Self::margin(n, y);
 
         if dot != 0.0 {
@@ -86,7 +83,7 @@ impl<T: num::Num + Clone + ToPrimitive + FromPrimitive + Copy, const N: usize> D
         random_flip()
     }
 
-    fn distance(x: [T; N], y: [T; N]) -> f64 {
+    fn distance(x: [f64; N], y: [f64; N]) -> f64 {
         let mut d = 0.0;
 
         for i in 0..N {
@@ -102,11 +99,11 @@ impl<T: num::Num + Clone + ToPrimitive + FromPrimitive + Copy, const N: usize> D
     }
 
     fn create_split(nodes: Vec<Self::Node>, n: &mut Self::Node) {
-        let (best_iv, best_jv) = two_means::<T, Euclidean, N>(nodes);
+        let (best_iv, best_jv) = two_means::<f64, Euclidean, N>(nodes);
 
         for z in 0..N {
             let best = best_iv[z] - best_jv[z];
-            n.v[z] = T::from_f64(best).unwrap_or(T::zero());
+            n.v[z] = best;
         }
 
         n.v = normalize(n.v);
@@ -129,6 +126,7 @@ mod arrays {
         ser::SerializeTuple,
         Deserialize, Deserializer, Serialize, Serializer,
     };
+
     pub fn serialize<S: Serializer, T: Serialize, const N: usize>(
         data: &[T; N],
         ser: S,
