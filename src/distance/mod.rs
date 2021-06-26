@@ -1,10 +1,12 @@
 // use crate::node::Node;
-pub mod euclidean;
+// pub mod euclidean;
 pub mod hamming;
 //pub mod manhattan;
 
-pub use euclidean::Euclidean;
+// pub use euclidean::Euclidean;
 pub use hamming::Hamming;
+
+use self::hamming::HammingNode;
 
 fn get_norm<const N: usize>(v: [f64; N]) -> f64 {
     let mut sq_norm = 0.0;
@@ -39,7 +41,7 @@ pub fn to_f64_slice<T: num::ToPrimitive + Copy, const N: usize>(v: [T; N]) -> [f
 
     c
 }
-
+/*
 fn two_means<T: num::Num + num::ToPrimitive + num::FromPrimitive + Copy, D: Distance<T, N>, const N: usize>(nodes: Vec<D::Node>) -> ([f64; N], [f64; N]) {
     let count = nodes.len();
     let i: u64 = rand::random::<u64>() % count as u64;
@@ -75,9 +77,9 @@ fn two_means<T: num::Num + num::ToPrimitive + num::FromPrimitive + Copy, D: Dist
     }
 
     (iv, jv)
-}
+} */
 
-pub trait NodeImpl<T: num::Num, const N: usize> {
+pub trait NodeImpl<T, const N: usize> {
     fn new() -> Self;
 
     fn reset(&mut self, w: [T; N]);
@@ -93,9 +95,9 @@ pub trait NodeImpl<T: num::Num, const N: usize> {
     fn set_children(&mut self, other: Vec<i64>);
 }
 
-pub trait Distance<T: num::Num, const N: usize> {
+pub trait Distance<T, const N: usize>{
     type Node: NodeImpl<T, N> + Clone;
-
+    
     fn distance(x: [T; N], y: [T; N]) -> f64;
 
     fn create_split(nodes: Vec<Self::Node>, n: &mut Self::Node);

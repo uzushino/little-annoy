@@ -5,22 +5,22 @@ use crate::distance::{Distance, NodeImpl};
 pub struct Hamming {}
 
 #[derive(Debug, Clone)]
-pub struct Node<T: num::Num, const N: usize> {
+pub struct HammingNode<const N: usize> {
     pub children: Vec<i64>,
-    pub v: [T; N],
+    pub v: [u64; N],
     pub n_descendants: usize,
 }
 
-impl<T: num::Num + Copy, const N: usize> NodeImpl<T, N> for Node<T, N> {
+impl<const N: usize> NodeImpl<u64, N> for HammingNode<N> {
     fn new() -> Self {
-        Node {
+        HammingNode {
             children: vec![0, 0],
-            v: [T::zero(); N],
+            v: [0; N],
             n_descendants: 0,
         }
     }
 
-    fn reset(&mut self, v: [T; N]) {
+    fn reset(&mut self, v: [u64; N]) {
         self.children[0] = 0;
         self.children[1] = 0;
         self.n_descendants = 1;
@@ -35,7 +35,7 @@ impl<T: num::Num + Copy, const N: usize> NodeImpl<T, N> for Node<T, N> {
         self.n_descendants = other;
     }
 
-    fn vector(&self) -> [T; N] {
+    fn vector(&self) -> [u64; N] {
         self.v
     }
 
@@ -56,10 +56,10 @@ impl<T: num::Num + Copy, const N: usize> NodeImpl<T, N> for Node<T, N> {
 
 const MAX_ITERATIONS: usize = 20;
 
-impl<T: num::Num + Copy + ToPrimitive + FromPrimitive, const N: usize> Distance<T, N> for Hamming {
-    type Node = Node<T, N>;
+impl<const N: usize> Distance<u64, N> for Hamming {
+    type Node = HammingNode<N>;
 
-    fn margin(n: &Self::Node, y: [T; N]) -> f64 {
+    fn margin(n: &Self::Node, y: [u64; N]) -> f64 {
         let n_bits = 4 * 8 as u64;
         let chunk = n.v[0].to_u64().unwrap_or_default() / n_bits;
         let r =
@@ -67,14 +67,14 @@ impl<T: num::Num + Copy + ToPrimitive + FromPrimitive, const N: usize> Distance<
         r as f64
     }
 
-    fn side(n: &Self::Node, y: [T; N]) -> bool {
+    fn side(n: &Self::Node, y: [u64; N]) -> bool {
         if Self::margin(n, y) > 0.0 {
             return true;
         }
         false
     }
 
-    fn distance(x: [T; N], y: [T; N]) -> f64 {
+    fn distance(x: [u64; N], y: [u64; N]) -> f64 {
         let mut dist = 0;
 
         for i in 0..N {
@@ -92,7 +92,7 @@ impl<T: num::Num + Copy + ToPrimitive + FromPrimitive, const N: usize> Distance<
         let mut cur_size = 0;
         let mut i = 0;
         for _ in 0..MAX_ITERATIONS {
-            n.v[0] = T::from_u64((rand::random::<usize>() % N) as u64).unwrap();
+            n.v[0] = (rand::random::<usize>() % N) as u64;
             cur_size = 0;
 
             for node in nodes.iter() {
@@ -110,7 +110,7 @@ impl<T: num::Num + Copy + ToPrimitive + FromPrimitive, const N: usize> Distance<
 
         if i == MAX_ITERATIONS {
             for j in 0..N {
-                n.v[0] = T::from_usize(j).unwrap();
+                n.v[0] = j as u64;
                 
                 cur_size = 0;
 

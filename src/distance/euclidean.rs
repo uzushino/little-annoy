@@ -14,7 +14,10 @@ pub struct Node<T: num::Num, const N: usize> {
     pub a: f64,
 }
 
-impl<T: num::Num + Copy, const N: usize> NodeImpl<T, N> for Node<T, N> {
+impl<T: num::Num + Copy, const N: usize> NodeImpl<N> for Node<T, N> {
+
+
+
     fn new() -> Self {
         Node {
             children: vec![0, 0],

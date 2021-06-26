@@ -3,7 +3,7 @@ use std::cmp::Ordering;
 pub mod ann;
 mod distance;
 
-pub use distance::Euclidean;
+// pub use distance::Euclidean;
 pub use distance::Hamming;
 
 pub use ann::Annoy;
