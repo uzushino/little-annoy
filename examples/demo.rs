@@ -3,19 +3,21 @@ use little_annoy::{Annoy, Euclidean};
 fn main() {
     let mut ann: Annoy<f64, Euclidean, 2> = Annoy::new();
 
+    println!("Add an item to the ANN.");
     ann.add_item(0, [1.0, 1.0]);
     ann.add_item(1, [5.0, 5.0]);
     ann.add_item(2, [2.0, 2.0]);
     ann.add_item(3, [4.0, 4.0]);
 
-    for z in 4..10 {
+    for z in 4..100_000 {
         ann.add_item(z, [10.0, 10.0]);
     }
 
-    ann.build(100);
+    println!("Building index ...");
+    ann.build(1000);
 
-    let (result, distance) = ann.get_nns_by_vector([1.0, 1.0], 5, -1);
-
+    println!("Search the nearest vector in the ANN.");
+    let (result, distance) = ann.get_nns_by_vector([1.0, 1.0], 10, -1);
     for (i, id) in result.iter().enumerate() {
         println!("result = {}, distance = {}", *id, distance[i]);
     }
