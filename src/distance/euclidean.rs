@@ -1,5 +1,4 @@
-
-use crate::distance::{normalize, two_means, Distance, NodeImpl, to_f64_slice};
+use crate::distance::{normalize, to_f64_slice, two_means, Distance, NodeImpl};
 use crate::random_flip;
 
 use num::{FromPrimitive, ToPrimitive};
@@ -63,10 +62,10 @@ impl<const N: usize> Distance<f64, N> for Euclidean {
     type Node = Node<N>;
 
     fn margin(n: &Self::Node, y: [f64; N]) -> f64 {
-        let mut dot= n.a;
+        let mut dot = n.a;
 
         for z in 0..N {
-            let v = n.v[z as usize] * y[z as usize]; 
+            let v = n.v[z as usize] * y[z as usize];
             dot = dot + v.to_f64().unwrap_or_default();
         }
 
@@ -90,7 +89,7 @@ impl<const N: usize> Distance<f64, N> for Euclidean {
             let v = (x[i as usize] - y[i as usize]) * (x[i as usize] - y[i as usize]);
             d = d + v.to_f64().unwrap_or_default();
         }
-    
+
         d
     }
 

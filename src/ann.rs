@@ -2,8 +2,8 @@ use crate::distance::{Distance, NodeImpl};
 use crate::{random_flip, Numeric};
 use std::collections::BinaryHeap;
 use std::collections::HashMap;
-use std::usize;
 use std::marker::PhantomData;
+use std::usize;
 
 #[derive(Debug)]
 pub struct Annoy<T: num::Num, D, const N: usize>
@@ -67,12 +67,7 @@ impl<T: num::Num + Copy, D: Distance<T, N>, const N: usize> Annoy<T, D, N> {
         }
     }
 
-    pub fn get_nns_by_vector(
-        &mut self,
-        v: [T; N],
-        n: usize,
-        search_k: i64,
-    ) -> (Vec<i64>, Vec<f64>)
+    pub fn get_nns_by_vector(&mut self, v: [T; N], n: usize, search_k: i64) -> (Vec<i64>, Vec<f64>)
     where
         D: Distance<T, N>,
     {

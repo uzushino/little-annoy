@@ -62,8 +62,8 @@ impl<const N: usize> Distance<u64, N> for Hamming {
     fn margin(n: &Self::Node, y: [u64; N]) -> f64 {
         let n_bits = 4 * 8 as u64;
         let chunk = n.v[0].to_u64().unwrap_or_default() / n_bits;
-        let r =
-            (y[chunk as usize].to_i64().unwrap()) & (1 << (n_bits - 1 - (n.v[0].to_u64().unwrap() as u64 % n_bits)) != 0) as i64;
+        let r = (y[chunk as usize].to_i64().unwrap())
+            & (1 << (n_bits - 1 - (n.v[0].to_u64().unwrap() as u64 % n_bits)) != 0) as i64;
         r as f64
     }
 
@@ -78,7 +78,8 @@ impl<const N: usize> Distance<u64, N> for Hamming {
         let mut dist = 0;
 
         for i in 0..N {
-            dist += ((x[i].to_u64().unwrap() as u64) ^ (y[i].to_u64().unwrap() as u64)).count_ones();
+            dist +=
+                ((x[i].to_u64().unwrap() as u64) ^ (y[i].to_u64().unwrap() as u64)).count_ones();
         }
 
         dist as f64
@@ -111,7 +112,7 @@ impl<const N: usize> Distance<u64, N> for Hamming {
         if i == MAX_ITERATIONS {
             for j in 0..N {
                 n.v[0] = j as u64;
-                
+
                 cur_size = 0;
 
                 for node in nodes.iter() {
