@@ -1,25 +1,24 @@
-[package]
-name = "little-annoy"
-version = "0.1.0"
-authors = ["uzushino <torattoria.mamiya@gmail.com>"]
-edition = "2018"
+[workspace]
+members = [
+    "little_annoy",
+    "little_annoy_wasm",
+]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+# The release profile, used for `cargo build --release`.
+[profile.release]
+# Enables "fat" LTO, for faster release builds
+lto = "fat"
+# Makes sure that all code is compiled together, for LTO
+codegen-units = 1
 
-[dependencies]
-rand = "0.8.3"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-num = "0.4"
+# The test profile, used for `cargo test`.
+[profile.test]
+# Enables thin local LTO and some optimizations.
+opt-level = 1
 
-[dev-dependencies]
-mnist = "0.4.1"
-rulinalg = "*"
-criterion = "0.3"
-img_hash = "3.0"
-image = "*"
-bit-vec = "*"
-
-[[bench]]
-name = "bench_main"
-harness = false
+# The benchmark profile, used for `cargo bench`.
+[profile.bench]
+# Enables "fat" LTO, for faster benchmark builds
+lto = "fat"
+# Makes sure that all code is compiled together, for LTO
+codegen-units = 1

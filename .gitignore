@@ -2,3 +2,6 @@
 data/*
 !data/.gitkeep
 .vscode
+
+node_modules
+little_annoy/target

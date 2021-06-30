@@ -1,0 +1,17 @@
+[package]
+name = "little_annoy_wasm"
+version = "0.1.0"
+authors = ["uzushino <torattoria.mamiya@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+little-annoy = { path = "../little_annoy" }
+wasm-bindgen = "0.2.74"
+getrandom = { version = "0.2.3", features = ["js"] }
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "little_annoy_wasm"
+bench = false
