@@ -10,6 +10,8 @@ edition = "2018"
 little-annoy = { path = "../little_annoy" }
 wasm-bindgen = "0.2.74"
 getrandom = { version = "0.2.3", features = ["js"] }
+lazy_static = "1.4.0"
+
 
 [lib]
 crate-type = ["cdylib", "lib"]
