@@ -11,9 +11,8 @@ lazy_static! {
     };
 }
 
-
 #[wasm_bindgen]
-pub fn eucridian() -> Result<(), JsValue> {
+pub fn build() -> Result<(), JsValue> {
     let _ = ANN.lock().and_then(|mut ann| {
         ann.add_item(0, [1.0, 1.0]);
         ann.add_item(1, [5.0, 5.0]);
@@ -22,13 +21,17 @@ pub fn eucridian() -> Result<(), JsValue> {
 
         ann.build(100);
 
-        let (result, distance) = ann.get_nns_by_vector([1.0, 1.0], 10, -1);
-
-        for (i, id) in result.iter().enumerate() {
-            println!("result = {}, distance = {}", *id, distance[i]);
-        }
-
         Ok(ann)
+    }).unwrap();
+
+    Ok(())
+}
+
+#[wasm_bindgen]
+pub fn get_nns_by_vector() -> Result<(), JsValue> {
+    let result = ANN.lock().and_then(|mut ann| {
+        let (result, distance) = ann.get_nns_by_vector([1.0, 1.0], 10, -1);
+        Ok((result, distance))
     }).unwrap();
 
     Ok(())
