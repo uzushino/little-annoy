@@ -1,4 +1,4 @@
-// use crate::node::Node;
+use serde::Serialize;
 
 pub mod euclidean;
 pub mod hamming;
@@ -103,7 +103,7 @@ pub trait NodeImpl<T, const N: usize> {
 }
 
 pub trait Distance<T, const N: usize> {
-    type Node: NodeImpl<T, N> + Clone;
+    type Node: NodeImpl<T, N> + Clone + Serialize;
 
     fn distance(x: [T; N], y: [T; N]) -> f64;
 

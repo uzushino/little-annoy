@@ -1,12 +1,14 @@
 use num::{FromPrimitive, ToPrimitive};
-
+use serde_derive::{Serialize, Deserialize};
 use crate::distance::{Distance, NodeImpl};
 
 pub struct Hamming {}
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Node<const N: usize> {
     pub children: Vec<i64>,
+
+    #[serde(with = "serde_arrays")]
     pub v: [u64; N],
     pub n_descendants: usize,
 }

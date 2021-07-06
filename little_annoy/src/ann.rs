@@ -4,8 +4,9 @@ use std::collections::BinaryHeap;
 use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::usize;
+use serde::Serialize;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct Annoy<T: num::Num, D, const N: usize>
 where
     D: Distance<T, N>,

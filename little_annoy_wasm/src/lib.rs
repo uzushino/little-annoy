@@ -6,7 +6,7 @@ use lazy_static::lazy_static;
 
 lazy_static! {
     static ref ANN: Mutex<Annoy<f64, Euclidean, 2>> = {
-        let mut ann = Annoy::new();
+        let ann = Annoy::new();
         Mutex::new(ann)
     };
 }
@@ -31,6 +31,7 @@ pub fn build() -> Result<(), JsValue> {
 pub fn get_nns_by_vector() -> Result<(), JsValue> {
     let result = ANN.lock().and_then(|mut ann| {
         let (result, distance) = ann.get_nns_by_vector([1.0, 1.0], 10, -1);
+        
         Ok((result, distance))
     }).unwrap();
 
