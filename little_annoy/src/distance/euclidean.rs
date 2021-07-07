@@ -1,5 +1,5 @@
 use num::{FromPrimitive, ToPrimitive};
-use serde_derive::{Serialize, Deserialize};
+use serde::{Serialize, Deserialize};
 
 use crate::distance::{normalize, to_f64_slice, two_means, Distance, NodeImpl};
 use crate::random_flip;

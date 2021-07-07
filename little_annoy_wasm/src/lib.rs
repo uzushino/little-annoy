@@ -11,6 +11,8 @@ lazy_static! {
     };
 }
 
+
+
 #[wasm_bindgen]
 pub fn build() -> Result<(), JsValue> {
     let _ = ANN.lock().and_then(|mut ann| {
@@ -31,7 +33,7 @@ pub fn build() -> Result<(), JsValue> {
 pub fn get_nns_by_vector() -> Result<(), JsValue> {
     let result = ANN.lock().and_then(|mut ann| {
         let (result, distance) = ann.get_nns_by_vector([1.0, 1.0], 10, -1);
-        
+
         Ok((result, distance))
     }).unwrap();
 
