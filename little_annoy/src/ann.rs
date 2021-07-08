@@ -1,10 +1,10 @@
 use crate::distance::{Distance, NodeImpl};
 use crate::{random_flip, Numeric};
+use serde::Serialize;
 use std::collections::BinaryHeap;
 use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::usize;
-use serde::Serialize;
 
 #[derive(Debug, Serialize)]
 pub struct Annoy<T: num::Num, D, const N: usize>

@@ -1,6 +1,6 @@
-use num::ToPrimitive;
-use serde::{Serialize, Deserialize};
 use crate::distance::{Distance, NodeImpl};
+use num::ToPrimitive;
+use serde::{Deserialize, Serialize};
 
 pub struct Hamming {}
 
