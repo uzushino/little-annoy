@@ -13,9 +13,9 @@ lazy_static! {
 
 #[wasm_bindgen]
 pub fn build() -> Result<(), JsValue> {
-    let _ = ANN
+    let res= ANN
         .lock()
-        .and_then(|mut ann| {
+        .map(|mut ann| {
             ann.add_item(0, [1.0, 1.0]);
             ann.add_item(1, [5.0, 5.0]);
             ann.add_item(2, [2.0, 2.0]);
@@ -23,7 +23,7 @@ pub fn build() -> Result<(), JsValue> {
 
             ann.build(100);
 
-            Ok(ann)
+            ann
         })
         .unwrap();
 
@@ -34,10 +34,9 @@ pub fn build() -> Result<(), JsValue> {
 pub fn get_nns_by_vector() -> Result<(), JsValue> {
     let result = ANN
         .lock()
-        .and_then(|mut ann| {
+        .map(|mut ann| {
             let (result, distance) = ann.get_nns_by_vector([1.0, 1.0], 10, -1);
-
-            Ok((result, distance))
+            (result, distance)
         })
         .unwrap();
 

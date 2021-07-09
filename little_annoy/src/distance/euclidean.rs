@@ -68,7 +68,7 @@ impl<const N: usize> Distance<f64, N> for Euclidean {
 
         for z in 0..N {
             let v = n.v[z as usize] * y[z as usize];
-            dot = dot + v.to_f64().unwrap_or_default();
+            dot += v.to_f64().unwrap_or_default();
         }
 
         dot
@@ -89,7 +89,7 @@ impl<const N: usize> Distance<f64, N> for Euclidean {
 
         for i in 0..N {
             let v = (x[i as usize] - y[i as usize]) * (x[i as usize] - y[i as usize]);
-            d = d + v.to_f64().unwrap_or_default();
+            d += v.to_f64().unwrap_or_default();
         }
 
         d
@@ -113,7 +113,7 @@ impl<const N: usize> Distance<f64, N> for Euclidean {
 
         for z in 0..N {
             let v = -n.v[z].to_f64().unwrap_or_default() * (best_iv[z] + best_jv[z]) / 2.0;
-            n.a = n.a + v;
+            n.a += v;
         }
     }
 }
