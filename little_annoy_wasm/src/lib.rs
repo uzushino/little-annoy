@@ -13,7 +13,7 @@ lazy_static! {
 
 #[wasm_bindgen]
 pub fn build() -> Result<(), JsValue> {
-    let res= ANN
+    let res = ANN
         .lock()
         .map(|mut ann| {
             ann.add_item(0, [1.0, 1.0]);
