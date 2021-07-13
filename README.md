@@ -29,16 +29,16 @@ fn main() {
 }
 ```
 
-Link: https://github.com/uzushino/little-annoy/blob/main/examples/demo.rs
+Link: https://github.com/uzushino/little-annoy/blob/main/little_annoy/examples/demo.rs
 
 
 ## Demo
 
-- mnist
+```bash
 
-1. Dowloand mnist data from http://yann.lecun.com/exdb/mnist/.
-2. Unzip the mnist data and extract it to `data` directory. 
-3. cargo run --example mnist
+$ cargo run --example demo
+
+```
 
 ## See also
 
