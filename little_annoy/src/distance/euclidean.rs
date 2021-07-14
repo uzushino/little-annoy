@@ -7,25 +7,25 @@ use crate::random_flip;
 pub struct Euclidean {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Node<const N: usize> {
+pub struct Node {
     pub children: Vec<i64>,
     #[serde(with = "serde_arrays")]
-    pub v: [f64; N],
+    pub v: Vec<f64>,
     pub n_descendants: usize,
     pub a: f64,
 }
 
-impl<const N: usize> NodeImpl<f64, N> for Node<N> {
+impl NodeImpl<f64> for Node {
     fn new() -> Self {
         Node {
             children: vec![0, 0],
-            v: [0.0; N],
+            v: vec![0.0],
             n_descendants: 0,
             a: 0.,
         }
     }
 
-    fn reset(&mut self, v: [f64; N]) {
+    fn reset(&mut self, v: Vec<f64>) {
         self.children[0] = 0;
         self.children[1] = 0;
         self.n_descendants = 1;
@@ -40,7 +40,7 @@ impl<const N: usize> NodeImpl<f64, N> for Node<N> {
         self.n_descendants = other;
     }
 
-    fn vector(&self) -> [f64; N] {
+    fn vector(&self) -> Vec<f64> {
         self.v
     }
 
@@ -60,13 +60,13 @@ impl<const N: usize> NodeImpl<f64, N> for Node<N> {
     }
 }
 
-impl<const N: usize> Distance<f64, N> for Euclidean {
-    type Node = Node<N>;
+impl Distance<f64> for Euclidean {
+    type Node = Node;
 
-    fn margin(n: &Self::Node, y: [f64; N]) -> f64 {
+    fn margin(n: &Self::Node, y: Vec<f64>) -> f64 {
         let mut dot = n.a;
 
-        for z in 0..N {
+        for z in 0..y.len() {
             let v = n.v[z as usize] * y[z as usize];
             dot += v.to_f64().unwrap_or_default();
         }
@@ -74,7 +74,7 @@ impl<const N: usize> Distance<f64, N> for Euclidean {
         dot
     }
 
-    fn side(n: &Self::Node, y: [f64; N]) -> bool {
+    fn side(n: &Self::Node, y: Vec<f64>) -> bool {
         let dot = Self::margin(n, y);
 
         if dot != 0.0 {
@@ -84,10 +84,10 @@ impl<const N: usize> Distance<f64, N> for Euclidean {
         random_flip()
     }
 
-    fn distance(x: [f64; N], y: [f64; N]) -> f64 {
+    fn distance(x: Vec<f64>, y: Vec<f64>, f: usize) -> f64 {
         let mut d = 0.0;
 
-        for i in 0..N {
+        for i in 0..f {
             let v = (x[i as usize] - y[i as usize]) * (x[i as usize] - y[i as usize]);
             d += v.to_f64().unwrap_or_default();
         }
@@ -99,10 +99,10 @@ impl<const N: usize> Distance<f64, N> for Euclidean {
         distance.max(0.0).sqrt()
     }
 
-    fn create_split(nodes: Vec<Self::Node>, n: &mut Self::Node) {
-        let (best_iv, best_jv) = two_means::<f64, Euclidean, N>(nodes);
+    fn create_split(nodes: Vec<Self::Node>, n: &mut Self::Node, f: usize) {
+        let (best_iv, best_jv) = two_means::<f64, Euclidean>(nodes, f);
 
-        for z in 0..N {
+        for z in 0..f {
             let best = best_iv[z] - best_jv[z];
             n.v[z] = best;
         }
@@ -111,7 +111,7 @@ impl<const N: usize> Distance<f64, N> for Euclidean {
 
         n.a = 0.0;
 
-        for z in 0..N {
+        for z in 0..f {
             let v = -n.v[z].to_f64().unwrap_or_default() * (best_iv[z] + best_jv[z]) / 2.0;
             n.a += v;
         }

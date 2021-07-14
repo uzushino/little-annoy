@@ -7,10 +7,11 @@ use std::marker::PhantomData;
 use std::usize;
 
 #[derive(Debug, Serialize)]
-pub struct Annoy<T: num::Num, D, const N: usize>
+pub struct Annoy<T: num::Num, D>
 where
-    D: Distance<T, N>,
+    D: Distance<T>,
 {
+    pub _f: usize,
     pub _K: usize,
     pub _n_nodes: i64,
     pub _n_items: i64,
@@ -21,19 +22,20 @@ where
     pub t: PhantomData<T>,
 }
 
-impl<T: num::Num + Copy, D: Distance<T, N>, const N: usize> Annoy<T, D, N> {
-    pub fn new() -> Self {
+impl<T: num::Num + Copy, D: Distance<T>> Annoy<T, D> {
+    pub fn new(f: usize) -> Self {
         Self {
             _roots: Vec::new(),
             _nodes: HashMap::new(),
             _n_items: 0,
             _n_nodes: 0,
+            _f: f,
             _K: 6,
             t: PhantomData,
         }
     }
 
-    pub fn add_item(&mut self, item: i64, w: [T; N]) {
+    pub fn add_item(&mut self, item: i64, w: Vec<T>) {
         let n = self._nodes.entry(item).or_insert(D::Node::new());
         n.reset(w);
 
@@ -68,16 +70,16 @@ impl<T: num::Num + Copy, D: Distance<T, N>, const N: usize> Annoy<T, D, N> {
         }
     }
 
-    pub fn get_nns_by_vector(&mut self, v: [T; N], n: usize, search_k: i64) -> (Vec<i64>, Vec<f64>)
+    pub fn get_nns_by_vector(&mut self, v: Vec<T>, n: usize, search_k: i64) -> (Vec<i64>, Vec<f64>)
     where
-        D: Distance<T, N>,
+        D: Distance<T>,
     {
         self._get_all_nns(v, n, search_k)
     }
 
     pub fn get_nns_by_item(&mut self, item: i64, n: usize, search_k: i64) -> (Vec<i64>, Vec<f64>)
     where
-        D: Distance<T, N>,
+        D: Distance<T>,
     {
         let m = self._nodes.get(&item).unwrap();
         let v = m.vector();
@@ -111,7 +113,7 @@ impl<T: num::Num + Copy, D: Distance<T, N>, const N: usize> Annoy<T, D, N> {
         let children_indices = &mut [Vec::new(), Vec::new()];
         let mut m = D::Node::new();
 
-        D::create_split(children, &mut m);
+        D::create_split(children, &mut m, self._f);
 
         for i in 0..indices.len() {
             let j = indices[i];
@@ -156,9 +158,9 @@ impl<T: num::Num + Copy, D: Distance<T, N>, const N: usize> Annoy<T, D, N> {
         return item;
     }
 
-    fn _get_all_nns(&mut self, v: [T; N], n: usize, mut search_k: i64) -> (Vec<i64>, Vec<f64>)
+    fn _get_all_nns(&mut self, v: Vec<T>, n: usize, mut search_k: i64) -> (Vec<i64>, Vec<f64>)
     where
-        D: Distance<T, N>,
+        D: Distance<T>,
     {
         let mut q: BinaryHeap<(Numeric<f64>, i64)> = BinaryHeap::new();
 
@@ -205,7 +207,7 @@ impl<T: num::Num + Copy, D: Distance<T, N>, const N: usize> Annoy<T, D, N> {
 
             last = j;
             let mut _n = self._nodes.entry(j).or_insert(D::Node::new());
-            let dist = D::distance(v, _n.vector());
+            let dist = D::distance(v, _n.vector(), self._f);
             nns_dist.push((dist, j));
         }
 
