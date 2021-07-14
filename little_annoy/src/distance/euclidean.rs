@@ -6,22 +6,23 @@ use crate::random_flip;
 
 pub struct Euclidean {}
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Clone)]
 pub struct Node {
     pub children: Vec<i64>,
-    #[serde(with = "serde_arrays")]
     pub v: Vec<f64>,
     pub n_descendants: usize,
     pub a: f64,
+    f: usize,
 }
 
 impl NodeImpl<f64> for Node {
-    fn new() -> Self {
+    fn new(f: usize) -> Self {
         Node {
             children: vec![0, 0],
-            v: vec![0.0],
+            v: (0..f).map(|_| 0.0).collect(),
             n_descendants: 0,
             a: 0.,
+            f: f
         }
     }
 
@@ -41,7 +42,7 @@ impl NodeImpl<f64> for Node {
     }
 
     fn vector(&self) -> Vec<f64> {
-        self.v
+        self.v.clone()
     }
 
     fn children(&self) -> Vec<i64> {
@@ -63,7 +64,7 @@ impl NodeImpl<f64> for Node {
 impl Distance<f64> for Euclidean {
     type Node = Node;
 
-    fn margin(n: &Self::Node, y: Vec<f64>) -> f64 {
+    fn margin(n: &Self::Node, y: &Vec<f64>) -> f64 {
         let mut dot = n.a;
 
         for z in 0..y.len() {
@@ -74,7 +75,7 @@ impl Distance<f64> for Euclidean {
         dot
     }
 
-    fn side(n: &Self::Node, y: Vec<f64>) -> bool {
+    fn side(n: &Self::Node, y: &Vec<f64>) -> bool {
         let dot = Self::margin(n, y);
 
         if dot != 0.0 {
@@ -107,8 +108,7 @@ impl Distance<f64> for Euclidean {
             n.v[z] = best;
         }
 
-        n.v = normalize(n.v);
-
+        n.v = normalize(&n.v);
         n.a = 0.0;
 
         for z in 0..f {

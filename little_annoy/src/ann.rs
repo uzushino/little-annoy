@@ -6,7 +6,6 @@ use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::usize;
 
-#[derive(Debug, Serialize)]
 pub struct Annoy<T: num::Num, D>
 where
     D: Distance<T>,
@@ -36,7 +35,7 @@ impl<T: num::Num + Copy, D: Distance<T>> Annoy<T, D> {
     }
 
     pub fn add_item(&mut self, item: i64, w: Vec<T>) {
-        let n = self._nodes.entry(item).or_insert(D::Node::new());
+        let n = self._nodes.entry(item).or_insert(D::Node::new(self._f));
         n.reset(w);
 
         if item >= self._n_items {
@@ -96,7 +95,7 @@ impl<T: num::Num + Copy, D: Distance<T>> Annoy<T, D> {
             let item = self._n_nodes;
             self._n_nodes = self._n_nodes + 1;
 
-            let m = self._nodes.entry(item).or_insert(D::Node::new());
+            let m = self._nodes.entry(item).or_insert(D::Node::new(self._f));
             m.set_descendant(indices.len());
             m.set_children(indices.clone());
 
@@ -111,7 +110,7 @@ impl<T: num::Num + Copy, D: Distance<T>> Annoy<T, D> {
         });
 
         let children_indices = &mut [Vec::new(), Vec::new()];
-        let mut m = D::Node::new();
+        let mut m = D::Node::new(self._f);
 
         D::create_split(children, &mut m, self._f);
 
@@ -119,7 +118,7 @@ impl<T: num::Num + Copy, D: Distance<T>> Annoy<T, D> {
             let j = indices[i];
 
             if let Some(n) = self._nodes.get(&j) {
-                let side = D::side(&m, n.vector());
+                let side = D::side(&m, &n.vector());
                 children_indices[side as usize].push(j);
             }
         }
@@ -152,7 +151,7 @@ impl<T: num::Num + Copy, D: Distance<T>> Annoy<T, D> {
         let item = self._n_nodes;
         self._n_nodes = self._n_nodes + 1;
 
-        let e = self._nodes.entry(item).or_insert(D::Node::new());
+        let e = self._nodes.entry(item).or_insert(D::Node::new(self._f));
         e.copy(m);
 
         return item;
@@ -178,7 +177,7 @@ impl<T: num::Num + Copy, D: Distance<T>> Annoy<T, D> {
             let d = top.0 .0;
             let i = top.1;
 
-            let nd = self._nodes.entry(i).or_insert(D::Node::new());
+            let nd = self._nodes.entry(i).or_insert(D::Node::new(self._f));
             q.pop();
 
             if nd.descendant() == 1 && i < self._n_items {
@@ -187,7 +186,7 @@ impl<T: num::Num + Copy, D: Distance<T>> Annoy<T, D> {
                 let dst = nd.children();
                 nns.extend(dst);
             } else {
-                let margin = D::margin(nd, v);
+                let margin = D::margin(nd, &v);
 
                 q.push((Numeric(d.min(0.0 + margin)), nd.children()[1]));
                 q.push((Numeric(d.min(0.0 - margin)), nd.children()[0]));
@@ -206,8 +205,8 @@ impl<T: num::Num + Copy, D: Distance<T>> Annoy<T, D> {
             }
 
             last = j;
-            let mut _n = self._nodes.entry(j).or_insert(D::Node::new());
-            let dist = D::distance(v, _n.vector(), self._f);
+            let mut _n = self._nodes.entry(j).or_insert(D::Node::new(self._f));
+            let dist = D::distance(v.clone(), _n.vector(), self._f);
             nns_dist.push((dist, j));
         }
 

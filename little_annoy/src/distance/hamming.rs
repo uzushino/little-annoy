@@ -4,25 +4,25 @@ use serde::{Deserialize, Serialize};
 
 pub struct Hamming {}
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Node<const N: usize> {
+#[derive(Debug, Clone)]
+pub struct Node {
     pub children: Vec<i64>,
-
-    #[serde(with = "serde_arrays")]
-    pub v: [u64; N],
+    pub v: Vec<u64>,
     pub n_descendants: usize,
+    pub f: usize,
 }
 
-impl<const N: usize> NodeImpl<u64, N> for Node<N> {
-    fn new() -> Self {
+impl NodeImpl<u64> for Node {
+    fn new(f: usize) -> Self {
         Node {
             children: vec![0, 0],
-            v: [0; N],
+            v: vec![0; f],
             n_descendants: 0,
+            f
         }
     }
 
-    fn reset(&mut self, v: [u64; N]) {
+    fn reset(&mut self, v: Vec<u64>) {
         self.children[0] = 0;
         self.children[1] = 0;
         self.n_descendants = 1;
@@ -37,8 +37,8 @@ impl<const N: usize> NodeImpl<u64, N> for Node<N> {
         self.n_descendants = other;
     }
 
-    fn vector(&self) -> [u64; N] {
-        self.v
+    fn vector(&self) -> Vec<u64> {
+        self.v.clone()
     }
 
     fn children(&self) -> Vec<i64> {
@@ -58,10 +58,10 @@ impl<const N: usize> NodeImpl<u64, N> for Node<N> {
 
 const MAX_ITERATIONS: usize = 20;
 
-impl<const N: usize> Distance<u64, N> for Hamming {
-    type Node = Node<N>;
+impl Distance<u64> for Hamming {
+    type Node = Node;
 
-    fn margin(n: &Self::Node, y: [u64; N]) -> f64 {
+    fn margin(n: &Self::Node, y: &Vec<u64>) -> f64 {
         let n_bits = 4 * 8_u64;
         let chunk = n.v[0].to_u64().unwrap_or_default() / n_bits;
         let r = (y[chunk as usize].to_i64().unwrap())
@@ -69,17 +69,17 @@ impl<const N: usize> Distance<u64, N> for Hamming {
         r as f64
     }
 
-    fn side(n: &Self::Node, y: [u64; N]) -> bool {
+    fn side(n: &Self::Node, y: &Vec<u64>) -> bool {
         if Self::margin(n, y) > 0.0 {
             return true;
         }
         false
     }
 
-    fn distance(x: [u64; N], y: [u64; N]) -> f64 {
+    fn distance(x: Vec<u64>, y: Vec<u64>, f: usize) -> f64 {
         let mut dist = 0;
 
-        for i in 0..N {
+        for i in 0..f {
             dist +=
                 ((x[i].to_u64().unwrap() as u64) ^ (y[i].to_u64().unwrap() as u64)).count_ones();
         }
@@ -91,15 +91,15 @@ impl<const N: usize> Distance<u64, N> for Hamming {
         distance
     }
 
-    fn create_split(nodes: Vec<Self::Node>, n: &mut Self::Node) {
+    fn create_split(nodes: Vec<Self::Node>, n: &mut Self::Node, f: usize) {
         let mut cur_size = 0;
         let mut i = 0;
         for _ in 0..MAX_ITERATIONS {
-            n.v[0] = (rand::random::<usize>() % N) as u64;
+            n.v[0] = (rand::random::<usize>() % f) as u64;
             cur_size = 0;
 
             for node in nodes.iter() {
-                if Self::side(node, n.v) {
+                if Self::side(node, &n.v) {
                     cur_size += 1;
                 }
             }
@@ -112,13 +112,13 @@ impl<const N: usize> Distance<u64, N> for Hamming {
         }
 
         if i == MAX_ITERATIONS {
-            for j in 0..N {
+            for j in 0..f {
                 n.v[0] = j as u64;
 
                 cur_size = 0;
 
                 for node in nodes.iter() {
-                    if Self::side(node, n.v) {
+                    if Self::side(node, &n.v) {
                         cur_size += 1;
                     }
                 }

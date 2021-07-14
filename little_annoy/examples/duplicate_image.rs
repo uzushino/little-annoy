@@ -15,7 +15,7 @@ pub fn to_binary(elem: u8) -> Vec<bool> {
 }
 
 fn main() {
-    let mut ann: Annoy<u64, Hamming, 64> = Annoy::new();
+    let mut ann: Annoy<u64, Hamming> = Annoy::new(64);
 
     let image1 = image::open("data/a.png").unwrap();
     let image2 = image::open("data/b.png").unwrap();
