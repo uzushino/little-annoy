@@ -1,5 +1,3 @@
-use serde::Serialize;
-
 pub mod euclidean;
 pub mod hamming;
 
@@ -31,7 +29,7 @@ fn normalize<T: num::Num + num::ToPrimitive + num::FromPrimitive + Copy>(v: &Vec
 
 const ITERATION_STEPS: usize = 200;
 
-pub fn to_f64_slice<T: num::ToPrimitive + Copy>(v: &Vec<T>) -> Vec<f64> {
+pub fn to_f64_slice<T: num::ToPrimitive + Copy>(v: &[T]) -> Vec<f64> {
     let mut c: Vec<f64> = v.iter().map(|_| 0.0).collect();
 
     for (z, it) in v.iter().enumerate() {
@@ -80,14 +78,14 @@ fn two_means<T: num::Num + num::ToPrimitive + num::FromPrimitive + Copy, D: Dist
 pub trait NodeImpl<T> {
     fn new(f: usize) -> Self;
 
-    fn reset(&mut self, w: Vec<T>);
+    fn reset(&mut self, w: &[T]);
     fn copy(&mut self, other: Self);
 
     fn descendant(&self) -> usize;
     fn set_descendant(&mut self, other: usize);
 
-    fn vector(&self) -> Vec<T>;
-    fn set_vector(&self, _other: Vec<T>) {}
+    fn vector(&self) -> &[T];
+    fn set_vector(&self, _other: &[T]) {}
 
     fn children(&self) -> Vec<i64>;
     fn set_children(&mut self, other: Vec<i64>);
@@ -96,13 +94,13 @@ pub trait NodeImpl<T> {
 pub trait Distance<T> {
     type Node: NodeImpl<T> + Clone;
 
-    fn distance(x: Vec<T>, y: Vec<T>, f: usize) -> f64;
+    fn distance(x: &[T], y: &[T], f: usize) -> f64;
 
     fn create_split(nodes: Vec<Self::Node>, n: &mut Self::Node, f: usize);
 
-    fn side(n: &Self::Node, y: &Vec<T>) -> bool;
+    fn side(n: &Self::Node, y: &[T]) -> bool;
 
-    fn margin(n: &Self::Node, y: &Vec<T>) -> f64;
+    fn margin(n: &Self::Node, y: &[T]) -> f64;
 
     fn normalized_distance(distance: f64) -> f64;
 }

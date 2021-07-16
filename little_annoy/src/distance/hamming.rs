@@ -22,11 +22,11 @@ impl NodeImpl<u64> for Node {
         }
     }
 
-    fn reset(&mut self, v: Vec<u64>) {
+    fn reset(&mut self, v: &[u64]) {
         self.children[0] = 0;
         self.children[1] = 0;
         self.n_descendants = 1;
-        self.v = v;
+        self.v = v.to_vec();
     }
 
     fn descendant(&self) -> usize {
@@ -37,8 +37,8 @@ impl NodeImpl<u64> for Node {
         self.n_descendants = other;
     }
 
-    fn vector(&self) -> Vec<u64> {
-        self.v.clone()
+    fn vector(&self) -> &[u64] {
+        self.v.as_slice()
     }
 
     fn children(&self) -> Vec<i64> {
@@ -61,7 +61,7 @@ const MAX_ITERATIONS: usize = 20;
 impl Distance<u64> for Hamming {
     type Node = Node;
 
-    fn margin(n: &Self::Node, y: &Vec<u64>) -> f64 {
+    fn margin(n: &Self::Node, y: &[u64]) -> f64 {
         let n_bits = 4 * 8_u64;
         let chunk = n.v[0].to_u64().unwrap_or_default() / n_bits;
         let r = (y[chunk as usize].to_i64().unwrap())
@@ -69,14 +69,14 @@ impl Distance<u64> for Hamming {
         r as f64
     }
 
-    fn side(n: &Self::Node, y: &Vec<u64>) -> bool {
+    fn side(n: &Self::Node, y: &[u64]) -> bool {
         if Self::margin(n, y) > 0.0 {
             return true;
         }
         false
     }
 
-    fn distance(x: Vec<u64>, y: Vec<u64>, f: usize) -> f64 {
+    fn distance(x: &[u64], y: &[u64], f: usize) -> f64 {
         let mut dist = 0;
 
         for i in 0..f {

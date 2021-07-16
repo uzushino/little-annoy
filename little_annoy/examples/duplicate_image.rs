@@ -51,13 +51,13 @@ fn main() {
         v2[i] = image2_binary[i] as u64;
     }
 
-    ann.add_item(1, v1);
-    ann.add_item(2, v1);
-    ann.add_item(3, v1);
-    ann.add_item(4, v2);
+    ann.add_item(1, &v1);
+    ann.add_item(2, &v1);
+    ann.add_item(3, &v1);
+    ann.add_item(4, &v2);
 
     ann.build(100);
 
-    let (result, distance) = ann.get_nns_by_vector(v2, 4, -1);
+    let (result, distance) = ann.get_nns_by_vector(&v2, 4, -1);
     println!("result: {:?}, distance: {:?}", result, distance);
 }

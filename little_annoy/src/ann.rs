@@ -34,7 +34,7 @@ impl<T: num::Num + Copy, D: Distance<T>> Annoy<T, D> {
         }
     }
 
-    pub fn add_item(&mut self, item: i64, w: Vec<T>) {
+    pub fn add_item(&mut self, item: i64, w: &[T]) {
         let n = self._nodes.entry(item).or_insert(D::Node::new(self._f));
         n.reset(w);
 
@@ -69,11 +69,11 @@ impl<T: num::Num + Copy, D: Distance<T>> Annoy<T, D> {
         }
     }
 
-    pub fn get_nns_by_vector(&mut self, v: Vec<T>, n: usize, search_k: i64) -> (Vec<i64>, Vec<f64>)
+    pub fn get_nns_by_vector(&mut self, v: &[T], n: usize, search_k: i64) -> (Vec<i64>, Vec<f64>)
     where
         D: Distance<T>,
     {
-        self._get_all_nns(v, n, search_k)
+        self._get_all_nns(v.to_vec(), n, search_k)
     }
 
     pub fn get_nns_by_item(&mut self, item: i64, n: usize, search_k: i64) -> (Vec<i64>, Vec<f64>)
@@ -83,7 +83,7 @@ impl<T: num::Num + Copy, D: Distance<T>> Annoy<T, D> {
         let m = self._nodes.get(&item).unwrap();
         let v = m.vector();
 
-        self._get_all_nns(v, n, search_k)
+        self._get_all_nns(v.to_vec(), n, search_k)
     }
 
     fn _make_tree(&mut self, indices: &Vec<i64>) -> i64 {
@@ -118,7 +118,7 @@ impl<T: num::Num + Copy, D: Distance<T>> Annoy<T, D> {
             let j = indices[i];
 
             if let Some(n) = self._nodes.get(&j) {
-                let side = D::side(&m, &n.vector());
+                let side = D::side(&m, n.vector());
                 children_indices[side as usize].push(j);
             }
         }
@@ -162,6 +162,7 @@ impl<T: num::Num + Copy, D: Distance<T>> Annoy<T, D> {
         D: Distance<T>,
     {
         let mut q: BinaryHeap<(Numeric<f64>, i64)> = BinaryHeap::new();
+        let v = v.as_slice();
 
         if search_k == -1 {
             search_k = (n as i64) * self._roots.len() as i64;
@@ -186,7 +187,7 @@ impl<T: num::Num + Copy, D: Distance<T>> Annoy<T, D> {
                 let dst = nd.children();
                 nns.extend(dst);
             } else {
-                let margin = D::margin(nd, &v);
+                let margin = D::margin(nd, v);
 
                 q.push((Numeric(d.min(0.0 + margin)), nd.children()[1]));
                 q.push((Numeric(d.min(0.0 - margin)), nd.children()[0]));
@@ -206,7 +207,7 @@ impl<T: num::Num + Copy, D: Distance<T>> Annoy<T, D> {
 
             last = j;
             let mut _n = self._nodes.entry(j).or_insert(D::Node::new(self._f));
-            let dist = D::distance(v.clone(), _n.vector(), self._f);
+            let dist = D::distance(v, _n.vector(), self._f);
             nns_dist.push((dist, j));
         }
 

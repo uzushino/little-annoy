@@ -1,3 +1,5 @@
+//use core::slice::SlicePattern;
+
 use num::ToPrimitive;
 use serde::{Deserialize, Serialize};
 
@@ -26,11 +28,11 @@ impl NodeImpl<f64> for Node {
         }
     }
 
-    fn reset(&mut self, v: Vec<f64>) {
+    fn reset(&mut self, v: &[f64]) {
         self.children[0] = 0;
         self.children[1] = 0;
         self.n_descendants = 1;
-        self.v = v;
+        self.v = v.to_vec();
     }
 
     fn descendant(&self) -> usize {
@@ -41,8 +43,8 @@ impl NodeImpl<f64> for Node {
         self.n_descendants = other;
     }
 
-    fn vector(&self) -> Vec<f64> {
-        self.v.clone()
+    fn vector(&self) -> &[f64] {
+        self.v.as_slice()
     }
 
     fn children(&self) -> Vec<i64> {
@@ -64,7 +66,7 @@ impl NodeImpl<f64> for Node {
 impl Distance<f64> for Euclidean {
     type Node = Node;
 
-    fn margin(n: &Self::Node, y: &Vec<f64>) -> f64 {
+    fn margin(n: &Self::Node, y: &[f64]) -> f64 {
         let mut dot = n.a;
 
         for z in 0..y.len() {
@@ -75,7 +77,7 @@ impl Distance<f64> for Euclidean {
         dot
     }
 
-    fn side(n: &Self::Node, y: &Vec<f64>) -> bool {
+    fn side(n: &Self::Node, y: &[f64]) -> bool {
         let dot = Self::margin(n, y);
 
         if dot != 0.0 {
@@ -85,7 +87,7 @@ impl Distance<f64> for Euclidean {
         random_flip()
     }
 
-    fn distance(x: Vec<f64>, y: Vec<f64>, f: usize) -> f64 {
+    fn distance(x: &[f64], y: &[f64], f: usize) -> f64 {
         let mut d = 0.0;
 
         for i in 0..f {

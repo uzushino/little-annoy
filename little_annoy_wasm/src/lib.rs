@@ -1,44 +1,31 @@
 use little_annoy::{Annoy, Euclidean};
 use wasm_bindgen::prelude::*;
+use web_sys::console::log_1;
 
-use lazy_static::lazy_static;
-use std::sync::Mutex;
-
-lazy_static! {
-    static ref ANN: Mutex<Annoy<f64, Euclidean, 2>> = {
-        let ann = Annoy::new();
-        Mutex::new(ann)
-    };
+#[wasm_bindgen]
+pub fn ann_new(f: u8) -> *mut Annoy<f64, Euclidean> {
+    let ann: Annoy<f64, Euclidean>  = Annoy::new(f as usize);
+    &ann as *const _ as *mut _
 }
 
 #[wasm_bindgen]
-pub fn build() -> Result<(), JsValue> {
-    let res = ANN
-        .lock()
-        .map(|mut ann| {
-            ann.add_item(0, [1.0, 1.0]);
-            ann.add_item(1, [5.0, 5.0]);
-            ann.add_item(2, [2.0, 2.0]);
-            ann.add_item(3, [4.0, 4.0]);
+pub fn build(ann_ptr: *mut Annoy<f64, Euclidean>, n: i64) -> Result<(), JsValue>{
+    let ann = unsafe { ann_ptr.as_mut() };
 
-            ann.build(100);
-
-            ann
-        })
-        .unwrap();
+    if let Some(ann) = ann {
+        ann.build(n);
+    }
 
     Ok(())
 }
 
 #[wasm_bindgen]
-pub fn get_nns_by_vector() -> Result<(), JsValue> {
-    let result = ANN
-        .lock()
-        .map(|mut ann| {
-            let (result, distance) = ann.get_nns_by_vector([1.0, 1.0], 10, -1);
-            (result, distance)
-        })
-        .unwrap();
+pub fn add_item(ann_ptr: *mut Annoy<f64, Euclidean>, idx: u32, v: &[f64]) -> Result<(), JsValue>{
+    let ann = unsafe { ann_ptr.as_mut() };
+
+    if let Some(ann) = ann {
+        ann.add_item(idx as i64, v);
+    }
 
     Ok(())
 }
