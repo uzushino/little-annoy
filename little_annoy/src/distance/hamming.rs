@@ -18,7 +18,7 @@ impl NodeImpl<u64> for Node {
             children: vec![0, 0],
             v: vec![0; f],
             n_descendants: 0,
-            f
+            f,
         }
     }
 

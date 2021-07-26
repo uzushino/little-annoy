@@ -39,7 +39,10 @@ pub fn to_f64_slice<T: num::ToPrimitive + Copy>(v: &[T]) -> Vec<f64> {
     c
 }
 
-fn two_means<T: num::Num + num::ToPrimitive + num::FromPrimitive + Copy, D: Distance<T>>(nodes: Vec<D::Node>, f: usize) -> (Vec<f64>, Vec<f64>) {
+fn two_means<T: num::Num + num::ToPrimitive + num::FromPrimitive + Copy, D: Distance<T>>(
+    nodes: Vec<D::Node>,
+    f: usize,
+) -> (Vec<f64>, Vec<f64>) {
     let count = nodes.len();
     let i: u64 = rand::random::<u64>() % count as u64;
     let mut j: u64 = rand::random::<u64>() % (count - 1) as u64;
