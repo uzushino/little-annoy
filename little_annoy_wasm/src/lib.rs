@@ -1,30 +1,51 @@
 use little_annoy::{Annoy, Euclidean};
 use wasm_bindgen::prelude::*;
-use web_sys::console::*;
 
 #[wasm_bindgen]
-pub fn ann_new(f: u8) -> *mut Annoy<f64, Euclidean> {
-    let ann: Annoy<f64, Euclidean> = Annoy::new(f as usize);
-    &ann as *const _ as *mut _
+pub struct Ann {
+    ann: Annoy<f64, Euclidean>,
 }
 
 #[wasm_bindgen]
-pub fn build(ann_ptr: *mut Annoy<f64, Euclidean>, n: i64) -> Result<(), JsValue> {
-    let ann = unsafe { ann_ptr.as_mut() };
-
-    if let Some(ann) = ann {
-        ann.build(n);
-    }
-
-    Ok(())
+pub struct AnnResult {
+    result: Box<[i32]>,
+    dist: Box<[f32]>
 }
 
 #[wasm_bindgen]
-pub fn add_item(ann_ptr: *mut Annoy<f64, Euclidean>, idx: u32, v: &[f64]) -> Result<(), JsValue> {
-    let ann = unsafe { ann_ptr.as_mut() };
-    if let Some(ann) = ann {
-        ann.add_item(idx as i64, v);
+impl AnnResult {
+    pub fn result(&self) -> Box<[i32]> {
+        self.result.clone()
     }
+    
+    pub fn distance(&self) -> Box<[f32]> {
+        self.dist.clone()
+    }
+}
 
-    Ok(())
+#[wasm_bindgen]
+impl Ann {
+    pub fn new(f: u8) -> Ann {
+        let ann: Annoy<f64, Euclidean> = Annoy::new(f as usize);
+        Ann { 
+            ann
+        }
+    }
+    
+    pub fn add_item(&mut self, idx: i32, v: &[f64]) {
+        self.ann.add_item(idx as i64, v);
+    }
+    
+    pub fn build(&mut self, n: i32) {
+        self.ann.build(n as i64);
+    }
+    
+    pub fn get_nns_by_vector(&mut self, v: &[f64], n: i32, search_k: i32) -> AnnResult {
+        let (r, d) = self.ann.get_nns_by_vector(v, n as usize, search_k as i64);
+
+        AnnResult {
+            result: r.into_iter().map(|n| n as i32).collect::<Vec<i32>>().into_boxed_slice(),
+            dist: d.into_iter().map(|n| n as f32).collect::<Vec<f32>>().into_boxed_slice(),
+        }
+    }
 }
