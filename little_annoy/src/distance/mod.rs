@@ -1,6 +1,6 @@
+pub mod angular;
 pub mod euclidean;
 pub mod hamming;
-pub mod angular;
 
 //pub mod manhattan;
 pub use angular::Angular;

@@ -64,7 +64,7 @@ impl Distance<f64> for Angular {
         let mut dot = 0.;
 
         for z in 0..n.f {
-          dot += n.v[z] * y[z];
+            dot += n.v[z] * y[z];
         }
 
         return dot;
@@ -95,7 +95,7 @@ impl Distance<f64> for Angular {
         if ppqq > 0. {
             return 2.0 - 2.0 * pq / ppqq.sqrt();
         } else {
-            return 2.0
+            return 2.0;
         }
     }
 
