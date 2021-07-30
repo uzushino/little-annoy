@@ -35,7 +35,7 @@ Link: https://github.com/uzushino/little-annoy/blob/main/little_annoy/examples/d
 
 ```bash
 
-$ cargo run --example demo
+$ cargo run --release --example demo
 
 ```
 
