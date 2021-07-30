@@ -3,14 +3,13 @@ use num::ToPrimitive;
 use crate::distance::{normalize, two_means, Distance, NodeImpl};
 use crate::random_flip;
 
-pub struct Euclidean {}
+pub struct Angular {}
 
 #[derive(Clone)]
 pub struct Node {
     pub children: Vec<i64>,
     pub v: Vec<f64>,
     pub n_descendants: usize,
-    pub a: f64,
     f: usize,
 }
 
@@ -20,7 +19,6 @@ impl NodeImpl<f64> for Node {
             children: vec![0, 0],
             v: (0..f).map(|_| 0.0).collect(),
             n_descendants: 0,
-            a: 0.,
             f: f,
         }
     }
@@ -56,22 +54,20 @@ impl NodeImpl<f64> for Node {
         self.n_descendants = other.n_descendants;
         self.children = other.children;
         self.v = other.v;
-        self.a = other.a;
     }
 }
 
-impl Distance<f64> for Euclidean {
+impl Distance<f64> for Angular {
     type Node = Node;
 
     fn margin(n: &Self::Node, y: &[f64]) -> f64 {
-        let mut dot = n.a;
+        let mut dot = 0.;
 
-        for z in 0..y.len() {
-            let v = n.v[z as usize] * y[z as usize];
-            dot += v.to_f64().unwrap_or_default();
+        for z in 0..n.f {
+          dot += n.v[z] * y[z];
         }
 
-        dot
+        return dot;
     }
 
     fn side(n: &Self::Node, y: &[f64]) -> bool {
@@ -85,14 +81,22 @@ impl Distance<f64> for Euclidean {
     }
 
     fn distance(x: &[f64], y: &[f64], f: usize) -> f64 {
-        let mut d = 0.0;
+        let mut pp = 0.;
+        let mut qq = 0.;
+        let mut pq = 0.;
 
-        for i in 0..f {
-            let v = (x[i as usize] - y[i as usize]) * (x[i as usize] - y[i as usize]);
-            d += v.to_f64().unwrap_or_default();
+        for z in 0..f {
+            pp += x[z] * x[z];
+            qq += y[z] * y[z];
+            pq += x[z] * y[z];
         }
 
-        d
+        let ppqq = pp * qq;
+        if ppqq > 0. {
+            return 2.0 - 2.0 * pq / ppqq.sqrt();
+        } else {
+            return 2.0
+        }
     }
 
     fn normalized_distance(distance: f64) -> f64 {
@@ -100,7 +104,7 @@ impl Distance<f64> for Euclidean {
     }
 
     fn create_split(nodes: Vec<Self::Node>, n: &mut Self::Node, f: usize) {
-        let (best_iv, best_jv) = two_means::<f64, Euclidean>(nodes, f);
+        let (best_iv, best_jv) = two_means::<f64, Angular>(nodes, f);
 
         for z in 0..f {
             let best = best_iv[z] - best_jv[z];
@@ -108,11 +112,5 @@ impl Distance<f64> for Euclidean {
         }
 
         n.v = normalize(&n.v);
-        n.a = 0.0;
-
-        for z in 0..f {
-            let v = -n.v[z].to_f64().unwrap_or_default() * (best_iv[z] + best_jv[z]) / 2.0;
-            n.a += v;
-        }
     }
 }
