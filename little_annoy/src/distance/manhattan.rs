@@ -4,28 +4,28 @@ use crate::random_flip;
 pub struct Manhattan {}
 
 #[derive(Debug, Clone)]
-pub struct Node<const N: usize> {
+pub struct Node {
     pub children: Vec<i64>,
-    pub v: [f64; N],
+    pub v: Vec<f64>,
     pub n_descendants: usize,
     pub a: f64,
 }
 
-impl<const N: usize> NodeImpl<N> for Node<N> {
-    fn new() -> Self {
+impl NodeImpl<f64> for Node {
+    fn new(f: usize) -> Self {
         Node {
             children: vec![0, 0],
-            v: [0.0; N],
+            v: vec![0.0; f],
             n_descendants: 0,
             a: 0.0,
         }
     }
 
-    fn reset(&mut self, v: [f64; N]) {
+    fn reset(&mut self, v: &[f64]) {
         self.children[0] = 0;
         self.children[1] = 0;
         self.n_descendants = 1;
-        self.v = v;
+        self.v = v.to_vec();
     }
 
     fn descendant(&self) -> usize {
@@ -36,7 +36,7 @@ impl<const N: usize> NodeImpl<N> for Node<N> {
         self.n_descendants = other;
     }
 
-    fn vector(&self) -> [f64; N] {
+    fn vector(&self) -> &[f64] {
         self.v
     }
 
@@ -56,10 +56,10 @@ impl<const N: usize> NodeImpl<N> for Node<N> {
     }
 }
 
-impl<const N: usize> Distance<N> for Manhattan {
-    type Node = Node<N>;
+impl Distance<u64> for Manhattan {
+    type Node = Node;
 
-    fn margin(n: &Self::Node, y: [f64; N]) -> f64 {
+    fn margin(n: &Self::Node, y: &[f64]) -> f64 {
         let mut dot: f64 = n.a;
 
         for z in 0..N {

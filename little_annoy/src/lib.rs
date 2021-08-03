@@ -6,6 +6,7 @@ mod distance;
 pub use distance::Angular;
 pub use distance::Euclidean;
 pub use distance::Hamming;
+pub use distance::Manhattan;
 
 pub use ann::Annoy;
 

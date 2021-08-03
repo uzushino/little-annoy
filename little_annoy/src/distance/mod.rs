@@ -1,8 +1,8 @@
 pub mod angular;
 pub mod euclidean;
 pub mod hamming;
+pub mod manhattan;
 
-//pub mod manhattan;
 pub use angular::Angular;
 pub use euclidean::Euclidean;
 pub use hamming::Hamming;
