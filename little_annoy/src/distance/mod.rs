@@ -6,6 +6,7 @@ pub mod manhattan;
 pub use angular::Angular;
 pub use euclidean::Euclidean;
 pub use hamming::Hamming;
+pub use manhattan::Manhattan;
 
 fn get_norm(v: &Vec<f64>) -> f64 {
     let mut sq_norm = 0.0;

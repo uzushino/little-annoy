@@ -37,7 +37,7 @@ impl NodeImpl<f64> for Node {
     }
 
     fn vector(&self) -> &[f64] {
-        self.v
+        self.v.as_slice()
     }
 
     fn children(&self) -> Vec<i64> {
@@ -56,20 +56,20 @@ impl NodeImpl<f64> for Node {
     }
 }
 
-impl Distance<u64> for Manhattan {
+impl Distance<f64> for Manhattan {
     type Node = Node;
 
     fn margin(n: &Self::Node, y: &[f64]) -> f64 {
         let mut dot: f64 = n.a;
 
-        for z in 0..N {
+        for z in 0..y.len() {
             dot += n.v[z as usize] * y[z as usize];
         }
 
         dot
     }
 
-    fn side(n: &Self::Node, y: [f64; N]) -> bool {
+    fn side(n: &Self::Node, y: &[f64]) -> bool {
         let dot = Self::margin(n, y);
 
         if dot != 0.0 {
@@ -79,10 +79,10 @@ impl Distance<u64> for Manhattan {
         random_flip()
     }
 
-    fn distance(x: [f64; N], y: [f64; N]) -> f64 {
+    fn distance(x: &[f64], y: &[f64], f: usize) -> f64 {
         let mut d = 0.0;
 
-        for i in 0..N {
+        for i in 0..f {
             d += (x[i as usize] - y[i as usize]).abs();
         }
 
@@ -93,10 +93,10 @@ impl Distance<u64> for Manhattan {
         distance.max(0.0)
     }
 
-    fn create_split(nodes: Vec<Self::Node>, n: &mut Self::Node) {
-        let (best_iv, best_jv) = two_means::<Manhattan, N>(nodes);
+    fn create_split(nodes: Vec<Self::Node>, n: &mut Self::Node, f: usize) {
+        let (best_iv, best_jv) = two_means::<f64, Manhattan>(nodes, f);
 
-        for z in 0..N {
+        for z in 0..f {
             n.v[z] = best_iv[z] - best_jv[z];
         }
 
@@ -104,7 +104,7 @@ impl Distance<u64> for Manhattan {
 
         n.a = 0.0;
 
-        for z in 0..N {
+        for z in 0..f {
             n.a += -n.v[z] * (best_iv[z] + best_jv[z]) / 2.0;
         }
     }
