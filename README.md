@@ -4,6 +4,9 @@
 
 ## Usage
 
+- Clone this repo.
+- Run `cargo run --example demo` with your terminal.
+
 ```rust
 use little_annoy::{Annoy, Euclidean};
 
@@ -30,6 +33,16 @@ fn main() {
 
 Link: https://github.com/uzushino/little-annoy/blob/main/little_annoy/examples/demo.rs
 
+### Webassembly
+
+You can build the example locally with:
+
+```
+$ npm run build
+$ npm run serve
+```
+
+you can run npm serve then go to http://localhost:8080.
 
 ## Demo
 
