@@ -5,7 +5,7 @@
 ## Usage
 
 - Clone this repo.
-- Run `cargo run --example demo` with your terminal.
+- Run `cargo run --example demo` in your terminal.
 
 ```rust
 use little_annoy::{Annoy, Euclidean};

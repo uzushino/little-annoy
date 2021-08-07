@@ -1,9 +1,10 @@
+use serde::{Deserialize, Serialize};
 use crate::distance::{Distance, NodeImpl};
 use num::ToPrimitive;
 
 pub struct Hamming {}
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Node {
     pub children: Vec<i64>,
     pub v: Vec<u64>,

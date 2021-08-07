@@ -1,11 +1,11 @@
-use num::ToPrimitive;
+use serde::{Deserialize, Serialize};
 
 use crate::distance::{normalize, two_means, Distance, NodeImpl};
 use crate::random_flip;
 
 pub struct Angular {}
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Node {
     pub children: Vec<i64>,
     pub v: Vec<f64>,
