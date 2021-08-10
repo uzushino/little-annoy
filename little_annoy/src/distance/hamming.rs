@@ -58,7 +58,7 @@ impl NodeImpl<u64> for Node {
 
 const MAX_ITERATIONS: usize = 20;
 
-impl Distance<u64> for Hamming {
+impl<T: Float> Distance<T> for Hamming {
     type Node = Node;
 
     fn margin(n: &Self::Node, y: &[u64]) -> f64 {

@@ -8,6 +8,8 @@ pub use euclidean::Euclidean;
 pub use hamming::Hamming;
 pub use manhattan::Manhattan;
 
+use crate::float::Float;
+
 fn get_norm(v: &Vec<f64>) -> f64 {
     let mut sq_norm = 0.0;
 
@@ -42,43 +44,41 @@ pub fn to_f64_slice<T: num::ToPrimitive + Copy>(v: &[T]) -> Vec<f64> {
     c
 }
 
-fn two_means<T: num::Num + num::ToPrimitive + num::FromPrimitive + Copy, D: Distance<T>>(
-    nodes: Vec<D::Node>,
-    f: usize,
-) -> (Vec<f64>, Vec<f64>) {
+fn two_means<T: Float, D: Distance<T>>(nodes: Vec<D::Node>, f: usize) -> (Vec<T>, Vec<T>) {
     let count = nodes.len();
     let i: u64 = rand::random::<u64>() % count as u64;
     let mut j: u64 = rand::random::<u64>() % (count - 1) as u64;
     j += (j >= i) as u64;
-    let mut iv = to_f64_slice(&nodes[i as usize].vector());
-    let mut jv = to_f64_slice(&nodes[j as usize].vector());
 
-    let mut ic = 1.0;
-    let mut jc = 1.0;
+    let mut iv = nodes[i as usize].vector();
+    let mut jv = nodes[j as usize].vector();
+
+    let mut ic = Float::one();
+    let mut jc = Float::one();
 
     for _ in 0..ITERATION_STEPS {
         let k = rand::random::<usize>() % count as usize;
         let di = ic * D::distance(nodes[i as usize].vector(), nodes[k].vector(), f);
         let dj = jc * D::distance(nodes[j as usize].vector(), nodes[k].vector(), f);
-        let nk = to_f64_slice(&nodes[k].vector());
+        let nk = &nodes[k].vector();
 
         if di < dj {
             for z in 0..f {
                 let v = iv[z] * ic + nk[z];
-                iv[z] = v / (ic + 1.0);
+                iv[z] = v / (ic + Float::one());
             }
 
-            ic += 1.0;
+            ic += Float::one();
         } else if dj < di {
             for z in 0..f {
                 let v = jv[z] * jc + nk[z];
-                jv[z] = v / (jc + 1.0);
+                jv[z] = v / (jc + Float::one());
             }
-            jc += 1.0;
+            jc += Float::one();
         }
     }
 
-    (iv, jv)
+    (iv.to_vec(), jv.to_vec())
 }
 
 pub trait NodeImpl<T> {
@@ -97,16 +97,16 @@ pub trait NodeImpl<T> {
     fn set_children(&mut self, other: Vec<i64>);
 }
 
-pub trait Distance<T> {
+pub trait Distance<T: Float> {
     type Node: NodeImpl<T> + Clone;
 
-    fn distance(x: &[T], y: &[T], f: usize) -> f64;
+    fn distance(x: &[T], y: &[T], f: usize) -> T;
 
     fn create_split(nodes: Vec<Self::Node>, n: &mut Self::Node, f: usize);
 
     fn side(n: &Self::Node, y: &[T]) -> bool;
 
-    fn margin(n: &Self::Node, y: &[T]) -> f64;
+    fn margin(n: &Self::Node, y: &[T]) -> T;
 
     fn normalized_distance(distance: f64) -> f64;
 }

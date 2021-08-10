@@ -1,15 +1,14 @@
 use crate::distance::{Distance, NodeImpl};
 use crate::{random_flip, Numeric};
+use crate::float::Float;
+
 use serde::Serialize;
 use std::collections::BinaryHeap;
 use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::usize;
 
-pub struct Annoy<T: num::Num, D>
-where
-    D: Distance<T>,
-{
+pub struct Annoy<T: Float, D> where D: Distance<T> {
     pub _f: usize,
     pub _K: usize,
     pub _n_nodes: i64,
@@ -21,7 +20,7 @@ where
     pub t: PhantomData<T>,
 }
 
-impl<T: num::Num + Copy, D: Distance<T>> Annoy<T, D> {
+impl<T: Float, D: Distance<T>> Annoy<T, D> {
     pub fn new(f: usize) -> Self {
         Self {
             _roots: Vec::new(),
@@ -220,7 +219,7 @@ impl<T: num::Num + Copy, D: Distance<T>> Annoy<T, D> {
         let mut result = Vec::new();
 
         for (dist, idx) in nns_dist.iter().take(p) {
-            distances.push(D::normalized_distance(*dist));
+            // distances.push(D::normalized_distance(*dist));
             result.push(*idx)
         }
 

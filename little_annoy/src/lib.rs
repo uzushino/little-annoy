@@ -2,6 +2,7 @@ use std::cmp::Ordering;
 
 pub mod ann;
 mod distance;
+mod float;
 
 pub use distance::Angular;
 pub use distance::Euclidean;
