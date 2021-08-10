@@ -187,9 +187,11 @@ impl<T: Float, D: Distance<T>> Annoy<T, D> {
                 nns.extend(dst);
             } else {
                 let margin = D::margin(nd, v);
+                let a = T::zero() + margin;
+                let b = T::zero() - margin;
 
-                q.push((Numeric(d.min(0.0 + margin)), nd.children()[1]));
-                q.push((Numeric(d.min(0.0 - margin)), nd.children()[0]));
+                q.push((Numeric(d.min(T::to_f64(&a).unwrap())), nd.children()[1]));
+                q.push((Numeric(d.min(T::to_f64(&b).unwrap())), nd.children()[0]));
             }
         }
 

@@ -45,6 +45,10 @@ impl NodeImpl<f64> for Node {
         self.v.as_slice()
     }
 
+    fn mut_vector(&mut self) -> &mut Vec<f64> {
+        &mut self.v
+    }
+
     fn children(&self) -> Vec<i64> {
         self.children.clone()
     }

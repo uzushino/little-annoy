@@ -43,6 +43,10 @@ impl<T: Float> NodeImpl<T> for Node<T> {
         self.v.as_slice()
     }
 
+    fn mut_vector(&mut self) -> &mut Vec<T> {
+        &mut self.v
+    }
+
     fn children(&self) -> Vec<i64> {
         self.children.clone()
     }
@@ -74,8 +78,8 @@ impl<T: Float> Distance<T> for Angular {
     fn side(n: &Self::Node, y: &[T]) -> bool {
         let dot = Self::margin(n, y);
 
-        if dot != 0.0 {
-            return dot > 0.0;
+        if dot != T::zero() {
+            return dot > T::zero();
         }
 
         random_flip()

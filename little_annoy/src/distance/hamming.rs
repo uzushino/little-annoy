@@ -1,28 +1,29 @@
 use serde::{Deserialize, Serialize};
-use crate::distance::{Distance, NodeImpl};
 use num::ToPrimitive;
+use crate::distance::{Distance, NodeImpl};
+use crate::float::Float;
 
 pub struct Hamming {}
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct Node {
+pub struct Node<T: Float> {
     pub children: Vec<i64>,
-    pub v: Vec<u64>,
+    pub v: Vec<T>,
     pub n_descendants: usize,
     pub f: usize,
 }
 
-impl NodeImpl<u64> for Node {
+impl<T: Float> NodeImpl<T> for Node<T> {
     fn new(f: usize) -> Self {
         Node {
             children: vec![0, 0],
-            v: vec![0; f],
+            v: vec![T::zero(); f],
             n_descendants: 0,
             f,
         }
     }
 
-    fn reset(&mut self, v: &[u64]) {
+    fn reset(&mut self, v: &[T]) {
         self.children[0] = 0;
         self.children[1] = 0;
         self.n_descendants = 1;
@@ -37,8 +38,12 @@ impl NodeImpl<u64> for Node {
         self.n_descendants = other;
     }
 
-    fn vector(&self) -> &[u64] {
+    fn vector(&self) -> &[T] {
         self.v.as_slice()
+    }
+
+    fn mut_vector(&mut self) -> &mut Vec<T> {
+        &mut self.v
     }
 
     fn children(&self) -> Vec<i64> {
@@ -59,32 +64,33 @@ impl NodeImpl<u64> for Node {
 const MAX_ITERATIONS: usize = 20;
 
 impl<T: Float> Distance<T> for Hamming {
-    type Node = Node;
+    type Node = Node<T>;
 
-    fn margin(n: &Self::Node, y: &[u64]) -> f64 {
+    fn margin(n: &Self::Node, y: &[T]) -> T {
         let n_bits = 4 * 8_u64;
         let chunk = n.v[0].to_u64().unwrap_or_default() / n_bits;
         let r = (y[chunk as usize].to_i64().unwrap())
             & (1 << (n_bits - 1 - (n.v[0].to_u64().unwrap() as u64 % n_bits)) != 0) as i64;
-        r as f64
+
+        T::from_i64(r).unwrap()
     }
 
-    fn side(n: &Self::Node, y: &[u64]) -> bool {
-        if Self::margin(n, y) > 0.0 {
+    fn side(n: &Self::Node, y: &[T]) -> bool {
+        if Self::margin(n, y) > T::zero() {
             return true;
         }
         false
     }
 
-    fn distance(x: &[u64], y: &[u64], f: usize) -> f64 {
-        let mut dist = 0;
+    fn distance(x: &[T], y: &[T], f: usize) -> T {
+        let mut dist = T::zero();
 
         for i in 0..f {
-            dist +=
-                ((x[i].to_u64().unwrap() as u64) ^ (y[i].to_u64().unwrap() as u64)).count_ones();
+            let v = ((x[i].to_u64().unwrap() as u64) ^ (y[i].to_u64().unwrap() as u64)).count_ones();
+            dist += T::from_u32(v).unwrap();
         }
 
-        dist as f64
+        dist
     }
 
     fn normalized_distance(distance: f64) -> f64 {
@@ -94,8 +100,10 @@ impl<T: Float> Distance<T> for Hamming {
     fn create_split(nodes: Vec<Self::Node>, n: &mut Self::Node, f: usize) {
         let mut cur_size = 0;
         let mut i = 0;
+
         for _ in 0..MAX_ITERATIONS {
-            n.v[0] = (rand::random::<usize>() % f) as u64;
+            let rnd = (rand::random::<usize>() % f);
+            n.v[0] = T::from_usize(rnd).unwrap();
             cur_size = 0;
 
             for node in nodes.iter() {
@@ -113,7 +121,7 @@ impl<T: Float> Distance<T> for Hamming {
 
         if i == MAX_ITERATIONS {
             for j in 0..f {
-                n.v[0] = j as u64;
+                n.v[0] = T::from_usize(j).unwrap();
 
                 cur_size = 0;
 

@@ -44,14 +44,14 @@ pub fn to_f64_slice<T: num::ToPrimitive + Copy>(v: &[T]) -> Vec<f64> {
     c
 }
 
-fn two_means<T: Float, D: Distance<T>>(nodes: Vec<D::Node>, f: usize) -> (Vec<T>, Vec<T>) {
+fn two_means<T: Float, D: Distance<T>>(mut nodes: Vec<D::Node>, f: usize) -> (Vec<T>, Vec<T>) {
     let count = nodes.len();
     let i: u64 = rand::random::<u64>() % count as u64;
     let mut j: u64 = rand::random::<u64>() % (count - 1) as u64;
     j += (j >= i) as u64;
 
-    let mut iv = nodes[i as usize].vector();
-    let mut jv = nodes[j as usize].vector();
+    let iv = &mut nodes[i as usize].mut_vector().clone();
+    let jv = &mut nodes[j as usize].mut_vector().clone();
 
     let mut ic = Float::one();
     let mut jc = Float::one();
@@ -92,6 +92,7 @@ pub trait NodeImpl<T> {
 
     fn vector(&self) -> &[T];
     fn set_vector(&self, _other: &[T]) {}
+    fn mut_vector(&mut self) -> &mut Vec<T>;
 
     fn children(&self) -> Vec<i64>;
     fn set_children(&mut self, other: Vec<i64>);
