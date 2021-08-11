@@ -15,7 +15,7 @@ pub fn to_binary(elem: u8) -> Vec<bool> {
 }
 
 fn main() {
-    let mut ann: Annoy<u64, Hamming> = Annoy::new(64);
+    let mut ann: Annoy<f64, Hamming> = Annoy::new(64);
 
     let image1 = image::open("data/a.png").unwrap();
     let image2 = image::open("data/b.png").unwrap();
@@ -43,12 +43,12 @@ fn main() {
     let image1_binary: [u8; 64] = vec_to_fixed_slice(image1_binary);
     let image2_binary: [u8; 64] = vec_to_fixed_slice(image2_binary);
 
-    let mut v1: [u64; 64] = [0; 64];
-    let mut v2: [u64; 64] = [0; 64];
+    let mut v1: [f64; 64] = [0.; 64];
+    let mut v2: [f64; 64] = [0.; 64];
 
     for i in 0..64 {
-        v1[i] = image1_binary[i] as u64;
-        v2[i] = image2_binary[i] as u64;
+        v1[i] = image1_binary[i] as f64;
+        v2[i] = image2_binary[i] as f64;
     }
 
     ann.add_item(1, &v1);

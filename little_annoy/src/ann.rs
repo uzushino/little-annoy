@@ -221,7 +221,7 @@ impl<T: Float, D: Distance<T>> Annoy<T, D> {
         let mut result = Vec::new();
 
         for (dist, idx) in nns_dist.iter().take(p) {
-            // distances.push(D::normalized_distance(*dist));
+            distances.push(D::normalized_distance(T::to_f64(dist).unwrap()));
             result.push(*idx)
         }
 

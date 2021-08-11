@@ -53,8 +53,8 @@ fn two_means<T: Float, D: Distance<T>>(mut nodes: Vec<D::Node>, f: usize) -> (Ve
     let iv = &mut nodes[i as usize].mut_vector().clone();
     let jv = &mut nodes[j as usize].mut_vector().clone();
 
-    let mut ic = Float::one();
-    let mut jc = Float::one();
+    let mut ic = T::one();
+    let mut jc = T::one();
 
     for _ in 0..ITERATION_STEPS {
         let k = rand::random::<usize>() % count as usize;
@@ -65,16 +65,16 @@ fn two_means<T: Float, D: Distance<T>>(mut nodes: Vec<D::Node>, f: usize) -> (Ve
         if di < dj {
             for z in 0..f {
                 let v = iv[z] * ic + nk[z];
-                iv[z] = v / (ic + Float::one());
+                iv[z] = v / (ic + T::one());
             }
 
-            ic += Float::one();
+            ic += T::one();
         } else if dj < di {
             for z in 0..f {
                 let v = jv[z] * jc + nk[z];
-                jv[z] = v / (jc + Float::one());
+                jv[z] = v / (jc + T::one());
             }
-            jc += Float::one();
+            jc += T::one();
         }
     }
 
