@@ -1,7 +1,7 @@
-use serde::{Deserialize, Serialize};
-use num::ToPrimitive;
 use crate::distance::{Distance, NodeImpl};
 use crate::float::Float;
+use num::ToPrimitive;
+use serde::{Deserialize, Serialize};
 
 pub struct Hamming {}
 
@@ -86,7 +86,8 @@ impl<T: Float> Distance<T> for Hamming {
         let mut dist = T::zero();
 
         for i in 0..f {
-            let v = ((x[i].to_u64().unwrap() as u64) ^ (y[i].to_u64().unwrap() as u64)).count_ones();
+            let v =
+                ((x[i].to_u64().unwrap() as u64) ^ (y[i].to_u64().unwrap() as u64)).count_ones();
             dist += T::from_u32(v).unwrap();
         }
 

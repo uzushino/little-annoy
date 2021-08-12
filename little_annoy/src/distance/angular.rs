@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 
 use crate::distance::{normalize, two_means, Distance, NodeImpl};
-use crate::random_flip;
 use crate::float::Float;
+use crate::random_flip;
 
 pub struct Angular {}
 

@@ -1,6 +1,6 @@
 use crate::distance::{Distance, NodeImpl};
-use crate::{random_flip, Numeric};
 use crate::float::Float;
+use crate::{random_flip, Numeric};
 
 use serde::Serialize;
 use std::collections::BinaryHeap;
@@ -8,7 +8,10 @@ use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::usize;
 
-pub struct Annoy<T: Float, D> where D: Distance<T> {
+pub struct Annoy<T: Float, D>
+where
+    D: Distance<T>,
+{
     pub _f: usize,
     pub _K: usize,
     pub _n_nodes: i64,
