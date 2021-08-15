@@ -1,19 +1,19 @@
 use crate::distance::{Distance, NodeImpl};
-use crate::float::Float;
+use crate::item::Item;
 use num::ToPrimitive;
 use serde::{Deserialize, Serialize};
 
 pub struct Hamming {}
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct Node<T: Float> {
+pub struct Node<T: Item> {
     pub children: Vec<i64>,
     pub v: Vec<T>,
     pub n_descendants: usize,
     pub f: usize,
 }
 
-impl<T: Float> NodeImpl<T> for Node<T> {
+impl<T: Item> NodeImpl<T> for Node<T> {
     fn new(f: usize) -> Self {
         Node {
             children: vec![0, 0],
@@ -63,7 +63,7 @@ impl<T: Float> NodeImpl<T> for Node<T> {
 
 const MAX_ITERATIONS: usize = 20;
 
-impl<T: Float> Distance<T> for Hamming {
+impl<T: Item> Distance<T> for Hamming {
     type Node = Node<T>;
 
     fn margin(n: &Self::Node, y: &[T]) -> T {

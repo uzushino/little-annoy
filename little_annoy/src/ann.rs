@@ -1,14 +1,13 @@
 use crate::distance::{Distance, NodeImpl};
-use crate::float::Float;
+use crate::item::Item;
 use crate::{random_flip, Numeric};
 
-use serde::Serialize;
 use std::collections::BinaryHeap;
 use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::usize;
 
-pub struct Annoy<T: Float, D>
+pub struct Annoy<T: Item, D>
 where
     D: Distance<T>,
 {
@@ -23,7 +22,7 @@ where
     pub t: PhantomData<T>,
 }
 
-impl<T: Float, D: Distance<T>> Annoy<T, D> {
+impl<T: Item, D: Distance<T>> Annoy<T, D> {
     pub fn new(f: usize) -> Self {
         Self {
             _roots: Vec::new(),

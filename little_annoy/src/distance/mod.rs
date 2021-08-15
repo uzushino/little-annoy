@@ -8,7 +8,7 @@ pub use euclidean::Euclidean;
 pub use hamming::Hamming;
 pub use manhattan::Manhattan;
 
-use crate::float::Float;
+use crate::item::Item;
 
 fn get_norm(v: &Vec<f64>) -> f64 {
     let mut sq_norm = 0.0;
@@ -44,7 +44,7 @@ pub fn to_f64_slice<T: num::ToPrimitive + Copy>(v: &[T]) -> Vec<f64> {
     c
 }
 
-fn two_means<T: Float, D: Distance<T>>(mut nodes: Vec<D::Node>, f: usize) -> (Vec<T>, Vec<T>) {
+fn two_means<T: Item, D: Distance<T>>(mut nodes: Vec<D::Node>, f: usize) -> (Vec<T>, Vec<T>) {
     let count = nodes.len();
     let i: u64 = rand::random::<u64>() % count as u64;
     let mut j: u64 = rand::random::<u64>() % (count - 1) as u64;
@@ -98,7 +98,7 @@ pub trait NodeImpl<T> {
     fn set_children(&mut self, other: Vec<i64>);
 }
 
-pub trait Distance<T: Float> {
+pub trait Distance<T: Item> {
     type Node: NodeImpl<T> + Clone;
 
     fn distance(x: &[T], y: &[T], f: usize) -> T;

@@ -1,20 +1,20 @@
 use serde::{Deserialize, Serialize};
 
 use crate::distance::{normalize, two_means, Distance, NodeImpl};
-use crate::float::Float;
+use crate::item::Item;
 use crate::random_flip;
 
 pub struct Angular {}
 
 #[derive(Clone, Serialize, Deserialize)]
-pub struct Node<T: Float> {
+pub struct Node<T: Item> {
     pub children: Vec<i64>,
     pub v: Vec<T>,
     pub n_descendants: usize,
     f: usize,
 }
 
-impl<T: Float> NodeImpl<T> for Node<T> {
+impl<T: Item> NodeImpl<T> for Node<T> {
     fn new(f: usize) -> Self {
         Node {
             children: vec![0, 0],
@@ -62,7 +62,7 @@ impl<T: Float> NodeImpl<T> for Node<T> {
     }
 }
 
-impl<T: Float> Distance<T> for Angular {
+impl<T: Item> Distance<T> for Angular {
     type Node = Node<T>;
 
     fn margin(n: &Self::Node, y: &[T]) -> T {

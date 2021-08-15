@@ -2,7 +2,7 @@ use std::cmp::Ordering;
 
 pub mod ann;
 mod distance;
-mod float;
+mod item;
 
 pub use distance::Angular;
 pub use distance::Euclidean;
@@ -12,11 +12,11 @@ pub use distance::Manhattan;
 pub use ann::Annoy;
 
 #[derive(PartialEq)]
-struct Numeric<T: num::Num>(T);
+struct Numeric<T: item::Item>(T);
 
-impl<T: num::Num> Eq for Numeric<T> {}
+impl<T: item::Item> Eq for Numeric<T> {}
 
-impl<T: num::Num + PartialOrd> PartialOrd for Numeric<T> {
+impl<T: item::Item + PartialOrd> PartialOrd for Numeric<T> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         self.0.partial_cmp(&other.0)
     }
