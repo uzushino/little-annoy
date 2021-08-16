@@ -1,4 +1,4 @@
-pub trait Item :
+pub trait Item:
     num::Num
     + num::Zero
     + num::One

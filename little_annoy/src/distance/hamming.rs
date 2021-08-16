@@ -1,6 +1,5 @@
 use crate::distance::{Distance, NodeImpl};
 use crate::item::Item;
-use num::ToPrimitive;
 use serde::{Deserialize, Serialize};
 
 pub struct Hamming {}
@@ -103,7 +102,7 @@ impl<T: Item> Distance<T> for Hamming {
         let mut i = 0;
 
         for _ in 0..MAX_ITERATIONS {
-            let rnd = (rand::random::<usize>() % f);
+            let rnd = rand::random::<usize>() % f;
             n.v[0] = T::from_usize(rnd).unwrap();
             cur_size = 0;
 

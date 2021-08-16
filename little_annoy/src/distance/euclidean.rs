@@ -6,7 +6,7 @@ use crate::random_flip;
 
 pub struct Euclidean {}
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Node {
     pub children: Vec<i64>,
     pub v: Vec<f64>,

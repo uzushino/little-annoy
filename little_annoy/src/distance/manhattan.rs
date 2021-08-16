@@ -2,7 +2,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::distance::{normalize, two_means, Distance, NodeImpl};
 use crate::random_flip;
-
 pub struct Manhattan {}
 
 #[derive(Debug, Clone, Deserialize, Serialize)]

@@ -6,7 +6,7 @@ use crate::random_flip;
 
 pub struct Angular {}
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Node<T: Item> {
     pub children: Vec<i64>,
     pub v: Vec<T>,
