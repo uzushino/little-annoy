@@ -105,7 +105,7 @@ impl Distance<f64> for Manhattan {
             n.v[z] = best_iv[z] - best_jv[z];
         }
 
-        normalize(&mut n.v);
+        normalize(&n.v);
 
         n.a = 0.0;
 

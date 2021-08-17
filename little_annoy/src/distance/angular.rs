@@ -68,8 +68,8 @@ impl<T: Item> Distance<T> for Angular {
     fn margin(n: &Self::Node, y: &[T]) -> T {
         let mut dot = T::zero();
 
-        for z in 0..n.f {
-            dot += n.v[z] * y[z];
+        for (z, item) in y.iter().enumerate().take(n.f) {
+            dot += n.v[z] * *item;
         }
 
         dot
@@ -99,11 +99,12 @@ impl<T: Item> Distance<T> for Angular {
         let ppqq = pp * qq;
 
         let make_distance = || {
-            let two = T::from_f32(2.0).unwrap();
+            let two = T::from_f32(2.0).unwrap_or_else(|| T::zero());
+
             if ppqq > T::zero() {
-                return two - two * pq / ppqq.sqrt();
+                two - two * pq / ppqq.sqrt()
             } else {
-                return T::from_f32(2.0).unwrap();
+                T::from_f32(2.0).unwrap_or_else(|| T::zero())
             }
         };
 
