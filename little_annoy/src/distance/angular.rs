@@ -20,7 +20,7 @@ impl<T: Item> NodeImpl<T> for Node<T> {
             children: vec![0, 0],
             v: (0..f).map(|_| T::zero()).collect(),
             n_descendants: 0,
-            f: f,
+            f,
         }
     }
 

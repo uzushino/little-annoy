@@ -155,7 +155,7 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
         let e = self._nodes.entry(item).or_insert(D::Node::new(self._f));
         e.copy(m);
 
-        return item;
+        item
     }
 
     fn _get_all_nns(&mut self, v: Vec<T>, n: usize, mut search_k: i64) -> (Vec<i64>, Vec<f64>)
