@@ -44,7 +44,7 @@ pub fn to_f64_slice<T: num::ToPrimitive + Copy>(v: &[T]) -> Vec<f64> {
     c
 }
 
-fn two_means<T: Item, D: Distance<T>>(mut nodes: Vec<D::Node>, f: usize) -> (Vec<T>, Vec<T>) {
+fn two_means<T: Item, D: Distance<T>>(nodes: &mut Vec<D::Node>, f: usize) -> (Vec<T>, Vec<T>) {
     let count = nodes.len();
     let i: u64 = rand::random::<u64>() % count as u64;
     let mut j: u64 = rand::random::<u64>() % (count - 1) as u64;
@@ -103,7 +103,7 @@ pub trait Distance<T: Item> {
 
     fn distance(x: &[T], y: &[T], f: usize) -> T;
 
-    fn create_split(nodes: Vec<Self::Node>, n: &mut Self::Node, f: usize);
+    fn create_split(nodes: &mut Vec<Self::Node>, n: &mut Self::Node, f: usize);
 
     fn side(n: &Self::Node, y: &[T]) -> bool;
 

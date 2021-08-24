@@ -115,7 +115,7 @@ impl<T: Item> Distance<T> for Angular {
         distance.max(0.0).sqrt()
     }
 
-    fn create_split(nodes: Vec<Self::Node>, n: &mut Self::Node, f: usize) {
+    fn create_split(nodes: &mut Vec<Self::Node>, n: &mut Self::Node, f: usize) {
         let (best_iv, best_jv) = two_means::<T, Angular>(nodes, f);
 
         for z in 0..f {

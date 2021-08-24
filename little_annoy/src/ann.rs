@@ -104,6 +104,7 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
         }
 
         let mut children: Vec<D::Node> = Vec::default();
+
         indices.iter().for_each(|j| {
             if let Some(n) = self._nodes.get(&j) {
                 children.push(n.clone());
@@ -113,7 +114,7 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
         let children_indices = &mut [Vec::new(), Vec::new()];
         let mut m = D::Node::new(self._f);
 
-        D::create_split(children, &mut m, self._f);
+        D::create_split(&mut children, &mut m, self._f);
 
         for i in 0..indices.len() {
             let j = indices[i];

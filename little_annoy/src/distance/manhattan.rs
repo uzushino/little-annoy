@@ -98,8 +98,8 @@ impl Distance<f64> for Manhattan {
         distance.max(0.0)
     }
 
-    fn create_split(nodes: Vec<Self::Node>, n: &mut Self::Node, f: usize) {
-        let (best_iv, best_jv) = two_means::<f64, Manhattan>(nodes, f);
+    fn create_split(mut nodes: &mut Vec<Self::Node>, n: &mut Self::Node, f: usize) {
+        let (best_iv, best_jv) = two_means::<f64, Manhattan>(&mut nodes, f);
 
         for z in 0..f {
             n.v[z] = best_iv[z] - best_jv[z];
