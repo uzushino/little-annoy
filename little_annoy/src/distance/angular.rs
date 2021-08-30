@@ -126,3 +126,18 @@ impl<T: Item> Distance<T> for Angular {
         n.v = normalize(&n.v);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_margin() {
+        let x = &[1.0, 2.0];
+        let y = &[2.0, 4.0];
+        let f = 2;
+
+        let dist = Angular::distance(x, y, f);
+        assert_eq!(dist, 0.0);
+    }
+}
