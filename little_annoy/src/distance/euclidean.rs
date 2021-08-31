@@ -121,3 +121,19 @@ impl Distance<f64> for Euclidean {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_distance() {
+        let x = &[1.0, 2.0];
+        let y = &[2.0, 4.0];
+        let f = 2;
+
+        let dist = Euclidean::distance(x, y, f);
+
+        assert_eq!(dist, 5.0);
+    }
+}
