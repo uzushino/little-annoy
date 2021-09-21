@@ -71,10 +71,10 @@ impl Distance<f64> for Euclidean {
     fn margin(n: &Self::Node, y: &[f64]) -> f64 {
         let mut dot = n.a;
 
-        for z in 0..y.len() {
+        (0..y.len()).for_each(|z| {
             let v = n.v[z as usize] * y[z as usize];
             dot += v.to_f64().unwrap_or_default();
-        }
+        });
 
         dot
     }
@@ -135,5 +135,14 @@ mod tests {
         let dist = Euclidean::distance(x, y, f);
 
         assert_eq!(dist, 5.0);
+    }
+
+    #[test]
+    fn test_side() {
+        let mut n = Node::new(2);
+        n.v = vec![2., 4.];
+        let actual = Euclidean::side(&n, &[1., 2.]);
+
+        assert!(actual)
     }
 }

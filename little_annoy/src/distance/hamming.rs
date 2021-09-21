@@ -75,20 +75,18 @@ impl<T: Item> Distance<T> for Hamming {
     }
 
     fn side(n: &Self::Node, y: &[T]) -> bool {
-        if Self::margin(n, y) > T::zero() {
-            return true;
-        }
-        false
+        Self::margin(n, y) > T::zero()
     }
 
     fn distance(x: &[T], y: &[T], f: usize) -> T {
         let mut dist = T::zero();
 
-        for i in 0..f {
+        (0..f).for_each(|i| {
             let v =
                 ((x[i].to_u64().unwrap() as u64) ^ (y[i].to_u64().unwrap() as u64)).count_ones();
+
             dist += T::from_u32(v).unwrap();
-        }
+        });
 
         dist
     }
@@ -101,7 +99,7 @@ impl<T: Item> Distance<T> for Hamming {
         let mut cur_size = 0;
         let mut i = 0;
 
-        for _ in 0..MAX_ITERATIONS {
+        (0..MAX_ITERATIONS).for_each(|_| {
             let rnd = rand::random::<usize>() % f;
             n.v[0] = T::from_usize(rnd).unwrap();
             cur_size = 0;
@@ -113,11 +111,11 @@ impl<T: Item> Distance<T> for Hamming {
             }
 
             if cur_size > 0 && cur_size < nodes.len() {
-                break;
+                return
             }
 
             i += 1;
-        }
+        });
 
         if i == MAX_ITERATIONS {
             for j in 0..f {
