@@ -111,7 +111,7 @@ impl<T: Item> Distance<T> for Hamming {
             }
 
             if cur_size > 0 && cur_size < nodes.len() {
-                return
+                return;
             }
 
             i += 1;
