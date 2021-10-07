@@ -104,7 +104,7 @@ impl Distance<f64> for Euclidean {
         distance.max(0.0).sqrt()
     }
 
-    fn create_split(nodes: &mut Vec<Self::Node>, n: &mut Self::Node, f: usize) {
+    fn create_split(nodes: &[Self::Node], n: &mut Self::Node, f: usize) {
         let (best_iv, best_jv) = two_means::<f64, Euclidean>(nodes, f);
 
         for z in 0..f {

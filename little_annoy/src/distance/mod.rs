@@ -103,7 +103,7 @@ pub trait Distance<T: Item> {
 
     fn distance(x: &[T], y: &[T], f: usize) -> T;
 
-    fn create_split(nodes: &mut Vec<Self::Node>, n: &mut Self::Node, f: usize);
+    fn create_split(nodes: &[Self::Node], n: &mut Self::Node, f: usize);
 
     fn side(n: &Self::Node, y: &[T]) -> bool;
 

@@ -95,7 +95,7 @@ impl<T: Item> Distance<T> for Hamming {
         distance
     }
 
-    fn create_split(nodes: &mut Vec<Self::Node>, n: &mut Self::Node, f: usize) {
+    fn create_split(nodes: &[Self::Node], n: &mut Self::Node, f: usize) {
         let mut cur_size = 0;
         let mut i = 0;
 
