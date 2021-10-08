@@ -14,9 +14,9 @@ pub trait Item:
     fn sqrt(self) -> Self {
         let v = Self::to_f32(&self)
             .map(|v| v.sqrt())
-            .and_then(|v| Self::from_f32(v));
+            .and_then(Self::from_f32);
 
-        v.unwrap_or_else(|| Self::from_f32(0.).unwrap())
+            v.unwrap_or_else(|| Self::from_f32(0.).unwrap())
     }
 }
 

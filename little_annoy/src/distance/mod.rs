@@ -10,7 +10,7 @@ pub use manhattan::Manhattan;
 
 use crate::item::Item;
 
-fn get_norm(v: &Vec<f64>) -> f64 {
+fn get_norm(v: &[f64]) -> f64 {
     let mut sq_norm = 0.0;
 
     for z in 0..v.len() {
@@ -20,7 +20,7 @@ fn get_norm(v: &Vec<f64>) -> f64 {
     sq_norm.sqrt()
 }
 
-fn normalize<T: num::Num + num::ToPrimitive + num::FromPrimitive + Copy>(v: &Vec<T>) -> Vec<T> {
+fn normalize<T: num::Num + num::ToPrimitive + num::FromPrimitive + Copy>(v: &[T]) -> Vec<T> {
     let nv = to_f64_slice(v);
     let norm = get_norm(&nv);
 

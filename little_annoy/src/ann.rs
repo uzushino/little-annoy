@@ -36,7 +36,8 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
     }
 
     pub fn add_item(&mut self, item: i64, w: &[T]) {
-        let n = self._nodes.entry(item).or_insert(D::Node::new(self._f));
+        let f = self._f;
+        let n = self._nodes.entry(item).or_insert_with(|| D::Node::new(f));
         n.reset(w);
 
         if item >= self._n_items {
@@ -105,8 +106,8 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
 
         let mut children: Vec<D::Node> = Vec::default();
 
-        indices.iter().for_each(|j| {
-            if let Some(n) = self._nodes.get(&j) {
+        indices.iter().for_each(|index| {
+            if let Some(n) = self._nodes.get(&index) {
                 children.push(n.clone());
             }
         });
@@ -116,21 +117,19 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
 
         D::create_split(&mut children, &mut m, self._f);
 
-        for i in 0..indices.len() {
-            let j = indices[i];
-
-            if let Some(n) = self._nodes.get(&j) {
+        indices.iter().for_each(|index| {
+            if let Some(n) = self._nodes.get(&index) {
                 let side = D::side(&m, n.vector());
-                children_indices[side as usize].push(j);
+                children_indices[side as usize].push(*index);
             }
-        }
+        });
 
-        while children_indices[0].len() == 0 || children_indices[1].len() == 0 {
+        while children_indices[0].is_empty() || children_indices[1].is_empty() {
             children_indices[0].clear();
             children_indices[1].clear();
 
             indices
-                .into_iter()
+                .iter()
                 .for_each(|j| children_indices[random_flip() as usize].push(*j));
         }
 
@@ -151,7 +150,7 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
         }
 
         let item = self._n_nodes;
-        self._n_nodes = self._n_nodes + 1;
+        self._n_nodes += 1;
 
         let e = self._nodes.entry(item).or_insert(D::Node::new(self._f));
         e.copy(m);
@@ -202,7 +201,7 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
 
         let mut nns_dist = Vec::new();
         let mut last = -1;
-
+        let f = self._f;
         for i in 0..nns.len() {
             let j = nns[i];
             if j == last {
@@ -210,7 +209,7 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
             }
 
             last = j;
-            let mut _n = self._nodes.entry(j).or_insert(D::Node::new(self._f));
+            let mut _n = self._nodes.entry(j).or_insert_with(|| D::Node::new(f));
             let dist = D::distance(v, _n.vector(), self._f);
             nns_dist.push((dist, j));
         }

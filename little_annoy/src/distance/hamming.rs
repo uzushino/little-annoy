@@ -119,7 +119,7 @@ impl<T: Item> Distance<T> for Hamming {
 
         if i == MAX_ITERATIONS {
             for j in 0..f {
-                n.v[0] = T::from_usize(j).unwrap_or(T::zero());
+                n.v[0] = T::from_usize(j).unwrap_or_else(T::zero);
                 cur_size = 0;
 
                 for node in nodes.iter() {

@@ -99,12 +99,12 @@ impl<T: Item> Distance<T> for Angular {
         let ppqq = pp * qq;
 
         let make_distance = || {
-            let two = T::from_f32(2.0).unwrap_or_else(|| T::zero());
+            let two = T::from_f32(2.0).unwrap_or_else(T::zero);
 
             if ppqq > T::zero() {
                 two - two * pq / ppqq.sqrt()
             } else {
-                T::from_f32(2.0).unwrap_or_else(|| T::zero())
+                T::from_f32(2.0).unwrap_or_else(T::zero)
             }
         };
 
