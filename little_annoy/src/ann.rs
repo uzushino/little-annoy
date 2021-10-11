@@ -144,16 +144,18 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
         for side in 0..2 {
             let ii = side ^ flip;
             let a = &children_indices[ii];
+
             let mut v = m.children();
             v[ii] = self._make_tree(a);
+
             m.set_children(v);
         }
 
         let item = self._n_nodes;
         self._n_nodes += 1;
 
-        let e = self._nodes.entry(item).or_insert(D::Node::new(self._f));
-        e.copy(m);
+        let node = self._nodes.entry(item).or_insert(D::Node::new(self._f));
+        node.copy(m);
 
         item
     }
@@ -178,8 +180,8 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
             let top = q.peek().unwrap();
             let d = top.0 .0;
             let i = top.1;
-
             let nd = self._nodes.entry(i).or_insert(D::Node::new(self._f));
+
             q.pop();
 
             if nd.descendant() == 1 && i < self._n_items {
@@ -202,6 +204,7 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
         let mut nns_dist = Vec::new();
         let mut last = -1;
         let f = self._f;
+
         for i in 0..nns.len() {
             let j = nns[i];
             if j == last {

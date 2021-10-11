@@ -16,7 +16,7 @@ pub trait Item:
             .map(|v| v.sqrt())
             .and_then(Self::from_f32);
 
-            v.unwrap_or_else(|| Self::from_f32(0.).unwrap())
+        v.unwrap_or_else(|| Self::from_f32(0.).unwrap())
     }
 }
 
