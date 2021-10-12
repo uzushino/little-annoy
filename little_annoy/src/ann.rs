@@ -84,7 +84,6 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
     {
         let m = self._nodes.get(&item).unwrap();
         let v = m.vector();
-
         self._get_all_nns(v.to_vec(), n, search_k)
     }
 
@@ -154,7 +153,8 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
         let item = self._n_nodes;
         self._n_nodes += 1;
 
-        let node = self._nodes.entry(item).or_insert(D::Node::new(self._f));
+        let f = self._f;
+        let node = self._nodes.entry(item).or_insert_with(|| D::Node::new(f));
         node.copy(m);
 
         item
@@ -180,7 +180,8 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
             let top = q.peek().unwrap();
             let d = top.0 .0;
             let i = top.1;
-            let nd = self._nodes.entry(i).or_insert(D::Node::new(self._f));
+            let f = self._f;
+            let nd = self._nodes.entry(i).or_insert_with(|| D::Node::new(f));
 
             q.pop();
 
@@ -205,16 +206,15 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
         let mut last = -1;
         let f = self._f;
 
-        for i in 0..nns.len() {
-            let j = nns[i];
-            if j == last {
+        for j in &nns {
+            if *j == last {
                 continue;
             }
 
-            last = j;
-            let mut _n = self._nodes.entry(j).or_insert_with(|| D::Node::new(f));
+            last = *j;
+            let mut _n = self._nodes.entry(*j).or_insert_with(|| D::Node::new(f));
             let dist = D::distance(v, _n.vector(), self._f);
-            nns_dist.push((dist, j));
+            nns_dist.push((dist, *j));
         }
 
         let m = nns_dist.len();
