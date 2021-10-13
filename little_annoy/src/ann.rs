@@ -71,19 +71,20 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
         }
     }
 
-    pub fn get_nns_by_vector(&mut self, v: &[T], n: usize, search_k: i64) -> (Vec<i64>, Vec<f64>)
+    pub fn get_nns_by_vector(&self, v: &[T], n: usize, search_k: i64) -> (Vec<i64>, Vec<f64>)
     where
         D: Distance<T>,
     {
         self._get_all_nns(v.to_vec(), n, search_k)
     }
 
-    pub fn get_nns_by_item(&mut self, item: i64, n: usize, search_k: i64) -> (Vec<i64>, Vec<f64>)
+    pub fn get_nns_by_item(&self, item: i64, n: usize, search_k: i64) -> (Vec<i64>, Vec<f64>)
     where
         D: Distance<T>,
     {
         let m = self._nodes.get(&item).unwrap();
         let v = m.vector();
+
         self._get_all_nns(v.to_vec(), n, search_k)
     }
 
@@ -160,12 +161,14 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
         item
     }
 
-    fn _get_all_nns(&mut self, v: Vec<T>, n: usize, mut search_k: i64) -> (Vec<i64>, Vec<f64>)
+    fn _get_all_nns(&self, v: Vec<T>, n: usize, mut search_k: i64) -> (Vec<i64>, Vec<f64>)
     where
-        D: Distance<T>,
+        D: Distance<T>
     {
+        let mut nodes = self._nodes.clone();
         let mut q: BinaryHeap<(Numeric<f64>, i64)> = BinaryHeap::new();
         let v = v.as_slice();
+        let f = self._f;
 
         if search_k == -1 {
             search_k = (n as i64) * self._roots.len() as i64;
@@ -176,12 +179,12 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
         }
 
         let mut nns: Vec<i64> = Vec::new();
+
         while nns.len() < (search_k as usize) && !q.is_empty() {
             let top = q.peek().unwrap();
             let d = top.0 .0;
             let i = top.1;
-            let f = self._f;
-            let nd = self._nodes.entry(i).or_insert_with(|| D::Node::new(f));
+            let nd = nodes.entry(i).or_insert_with(|| D::Node::new(f));
 
             q.pop();
 
@@ -204,7 +207,6 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
 
         let mut nns_dist = Vec::new();
         let mut last = -1;
-        let f = self._f;
 
         for j in &nns {
             if *j == last {
@@ -212,7 +214,7 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
             }
 
             last = *j;
-            let mut _n = self._nodes.entry(*j).or_insert_with(|| D::Node::new(f));
+            let mut _n = nodes.entry(*j).or_insert_with(|| D::Node::new(f));
             let dist = D::distance(v, _n.vector(), self._f);
             nns_dist.push((dist, *j));
         }
