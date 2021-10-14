@@ -135,3 +135,19 @@ impl<T: Item> Distance<T> for Hamming {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_distance() {
+        let x = &[1.0, 1.0, 1.0];
+        let y = &[1.0, 1.0, 0.0];
+        let f = 3;
+
+        let dist = Hamming::distance(x, y, f);
+
+        assert_eq!(dist, 1.0);
+    }
+}

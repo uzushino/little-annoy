@@ -68,7 +68,7 @@ impl Distance<f64> for Manhattan {
         let mut dot: f64 = n.a;
 
         for z in 0..y.len() {
-            dot += n.v[z as usize] * y[z as usize];
+            dot += n.v[z] * y[z];
         }
 
         dot
@@ -88,7 +88,7 @@ impl Distance<f64> for Manhattan {
         let mut d = 0.0;
 
         for i in 0..f {
-            d += (x[i as usize] - y[i as usize]).abs();
+            d += (x[i] - y[i]).abs();
         }
 
         d
