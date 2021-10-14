@@ -163,7 +163,7 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
 
     fn _get_all_nns(&self, v: Vec<T>, n: usize, mut search_k: i64) -> (Vec<i64>, Vec<f64>)
     where
-        D: Distance<T>
+        D: Distance<T>,
     {
         let mut nodes = self._nodes.clone();
         let mut q: BinaryHeap<(Numeric<f64>, i64)> = BinaryHeap::new();
