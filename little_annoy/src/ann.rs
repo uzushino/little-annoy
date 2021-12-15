@@ -7,7 +7,6 @@ use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::usize;
 
-
 #[allow(non_snake_case)]
 pub struct Annoy<T: Item, D>
 where
