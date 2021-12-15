@@ -77,7 +77,7 @@ impl<T: Item> Distance<T> for Hamming {
         T::from_i64(r).unwrap()
     }
 
-    fn side(n: &Self::Node, y: &[T], rng: &mut StdRng) -> bool {
+    fn side(n: &Self::Node, y: &[T], _rng: &mut StdRng) -> bool {
         Self::margin(n, y) > T::zero()
     }
 
