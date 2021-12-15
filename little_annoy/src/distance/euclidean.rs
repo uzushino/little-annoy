@@ -19,7 +19,7 @@ impl NodeImpl<f64> for Node {
     fn new(f: usize) -> Self {
         Node {
             children: vec![0, 0],
-            v: (0..f).map(|_| 0.0).collect(),
+            v: vec![0.0; f],
             n_descendants: 0,
             a: 0.,
             f,

@@ -18,7 +18,7 @@ impl<T: Item> NodeImpl<T> for Node<T> {
     fn new(f: usize) -> Self {
         Node {
             children: vec![0, 0],
-            v: (0..f).map(|_| T::zero()).collect(),
+            v: vec![T::zero(); f],
             n_descendants: 0,
             f,
         }

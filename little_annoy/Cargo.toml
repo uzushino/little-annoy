@@ -9,8 +9,6 @@ edition = "2018"
 [dependencies]
 rand = "0.8.3"
 serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-serde_arrays = "*"
 num = "0.4"
 
 [dev-dependencies]

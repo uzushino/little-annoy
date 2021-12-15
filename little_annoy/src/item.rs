@@ -20,6 +20,12 @@ pub trait Item:
     }
 }
 
+impl Item for isize {}
+
+impl Item for i8 {}
+
+impl Item for i16 {}
+
 impl Item for f64 {}
 
 impl Item for f32 {}
