@@ -1,3 +1,4 @@
+use rand::rngs::StdRng;
 use num::ToPrimitive;
 use serde::{Deserialize, Serialize};
 
@@ -79,14 +80,14 @@ impl Distance<f64> for Euclidean {
         dot
     }
 
-    fn side(n: &Self::Node, y: &[f64]) -> bool {
+    fn side(n: &Self::Node, y: &[f64], rng:  &mut StdRng) -> bool {
         let dot = Self::margin(n, y);
 
         if dot != 0.0 {
             return dot > 0.0;
         }
 
-        random_flip()
+        random_flip(rng)
     }
 
     fn distance(x: &[f64], y: &[f64], f: usize) -> f64 {
@@ -104,8 +105,8 @@ impl Distance<f64> for Euclidean {
         distance.max(0.0).sqrt()
     }
 
-    fn create_split(nodes: &[Self::Node], n: &mut Self::Node, f: usize) {
-        let (best_iv, best_jv) = two_means::<f64, Euclidean>(nodes, f);
+    fn create_split(nodes: &[Self::Node], n: &mut Self::Node, f: usize, rng: &mut StdRng) {
+        let (best_iv, best_jv) = two_means::<f64, Euclidean>(rng, nodes, f);
 
         for z in 0..f {
             let best = best_iv[z] - best_jv[z];
@@ -141,7 +142,7 @@ mod tests {
     fn test_side() {
         let mut n = Node::new(2);
         n.v = vec![2., 4.];
-        let actual = Euclidean::side(&n, &[1., 2.]);
+        let actual = Euclidean::side(&n, &[1., 2.], &mut rand::SeedableRng::from_entropy());
 
         assert!(actual)
     }

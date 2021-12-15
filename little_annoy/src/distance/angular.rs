@@ -1,3 +1,4 @@
+use rand::rngs::StdRng;
 use serde::{Deserialize, Serialize};
 
 use crate::distance::{normalize, two_means, Distance, NodeImpl};
@@ -75,14 +76,14 @@ impl<T: Item> Distance<T> for Angular {
         dot
     }
 
-    fn side(n: &Self::Node, y: &[T]) -> bool {
+    fn side(n: &Self::Node, y: &[T], rng: &mut StdRng) -> bool {
         let dot = Self::margin(n, y);
 
         if dot != T::zero() {
             return dot > T::zero();
         }
 
-        random_flip()
+        random_flip(rng)
     }
 
     fn distance(x: &[T], y: &[T], f: usize) -> T {
@@ -115,8 +116,8 @@ impl<T: Item> Distance<T> for Angular {
         distance.max(0.0).sqrt()
     }
 
-    fn create_split(nodes: &[Self::Node], n: &mut Self::Node, f: usize) {
-        let (best_iv, best_jv) = two_means::<T, Angular>(nodes, f);
+    fn create_split(nodes: &[Self::Node], n: &mut Self::Node, f: usize, rng: &mut StdRng) {
+        let (best_iv, best_jv) = two_means::<T, Angular>(rng, nodes, f);
 
         for z in 0..f {
             let best = best_iv[z] - best_jv[z];

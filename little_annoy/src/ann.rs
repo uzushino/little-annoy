@@ -6,6 +6,7 @@ use std::collections::BinaryHeap;
 use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::usize;
+use rand::prelude::SeedableRng;
 
 #[allow(non_snake_case)]
 pub struct Annoy<T: Item, D>
@@ -20,11 +21,12 @@ where
     pub _nodes: HashMap<i64, D::Node>,
     pub _roots: Vec<i64>,
 
+    pub _seed: u64,
     pub t: PhantomData<T>,
 }
 
 impl<T: Item, D: Distance<T>> Annoy<T, D> {
-    pub fn new(f: usize) -> Self {
+    pub fn new(f: usize, seed: u64) -> Self {
         Self {
             _roots: Vec::new(),
             _nodes: HashMap::new(),
@@ -32,6 +34,7 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
             _n_nodes: 0,
             _f: f,
             _K: 6,
+            _seed: seed,
             t: PhantomData,
         }
     }
@@ -116,14 +119,15 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
         let children_indices = &mut [Vec::new(), Vec::new()];
         let mut m = D::Node::new(self._f);
 
-        D::create_split(&mut children, &mut m, self._f);
+        let mut rng = SeedableRng::seed_from_u64(self._seed);
+        D::create_split(&mut children, &mut m, self._f, &mut rng);
 
-        indices.iter().for_each(|index| {
-            if let Some(n) = self._nodes.get(&index) {
-                let side = D::side(&m, n.vector());
-                children_indices[side as usize].push(*index);
+        for i in indices.iter() {
+            if let Some(n) = self._nodes.get(&i) {
+                let side = D::side(&m, n.vector(), &mut rng);
+                children_indices[side as usize].push(*i);
             }
-        });
+        };
 
         while children_indices[0].is_empty() || children_indices[1].is_empty() {
             children_indices[0].clear();
@@ -131,7 +135,7 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
 
             indices
                 .iter()
-                .for_each(|j| children_indices[random_flip() as usize].push(*j));
+                .for_each(|j| children_indices[random_flip(&mut rng) as usize].push(*j));
         }
 
         let flip = if children_indices[0].len() > children_indices[1].len() {
