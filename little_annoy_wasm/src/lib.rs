@@ -26,7 +26,7 @@ impl AnnResult {
 #[wasm_bindgen]
 impl Ann {
     pub fn new(f: u8) -> Ann {
-        let ann: Annoy<f64, Euclidean> = Annoy::new(f as usize, 1);
+        let ann: Annoy<f64, Euclidean> = Annoy::new(f as usize);
         Ann { ann }
     }
 

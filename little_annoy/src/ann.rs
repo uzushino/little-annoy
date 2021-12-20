@@ -7,6 +7,7 @@ use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::usize;
 use rand::prelude::SeedableRng;
+use rand::rngs::StdRng;
 
 #[allow(non_snake_case)]
 pub struct Annoy<T: Item, D>
@@ -21,12 +22,12 @@ where
     pub _nodes: HashMap<i64, D::Node>,
     pub _roots: Vec<i64>,
 
-    pub _seed: u64,
+    pub _seed: Option<u64>,
     pub t: PhantomData<T>,
 }
 
 impl<T: Item, D: Distance<T>> Annoy<T, D> {
-    pub fn new(f: usize, seed: u64) -> Self {
+    pub fn new(f: usize) -> Self {
         Self {
             _roots: Vec::new(),
             _nodes: HashMap::new(),
@@ -34,9 +35,13 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
             _n_nodes: 0,
             _f: f,
             _K: 6,
-            _seed: seed,
+            _seed: None,
             t: PhantomData,
         }
+    }
+
+    pub fn set_seed(&mut self, seed: u64) {
+        self._seed = Some(seed);
     }
 
     pub fn add_item(&mut self, item: i64, w: &[T]) {
@@ -119,7 +124,12 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
         let children_indices = &mut [Vec::new(), Vec::new()];
         let mut m = D::Node::new(self._f);
 
-        let mut rng = SeedableRng::seed_from_u64(self._seed);
+        let mut rng = if let Some(seed) = self._seed {
+            SeedableRng::seed_from_u64(seed)
+        } else {
+            StdRng::from_entropy()
+        };
+
         D::create_split(&mut children, &mut m, self._f, &mut rng);
 
         for i in indices.iter() {
