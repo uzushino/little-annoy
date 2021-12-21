@@ -97,18 +97,18 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
         self._get_all_nns(v.to_vec(), n, search_k)
     }
 
-    fn _make_tree(&mut self, indices: &Vec<i64>) -> i64 {
+    fn _make_tree(&mut self, indices: &[i64]) -> i64 {
         if indices.len() == 1 {
             return indices[0];
         }
 
         if indices.len() <= (self._K as usize) {
             let item = self._n_nodes;
-            self._n_nodes = self._n_nodes + 1;
+            self._n_nodes += 1;
 
             let m = self._nodes.entry(item).or_insert(D::Node::new(self._f));
             m.set_descendant(indices.len());
-            m.set_children(indices.clone());
+            m.set_children(indices.to_owned());
 
             return item;
         }
@@ -116,7 +116,7 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
         let mut children: Vec<D::Node> = Vec::default();
 
         indices.iter().for_each(|index| {
-            if let Some(n) = self._nodes.get(&index) {
+            if let Some(n) = self._nodes.get(index) {
                 children.push(n.clone());
             }
         });
@@ -130,10 +130,10 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
             StdRng::from_entropy()
         };
 
-        D::create_split(&mut children, &mut m, self._f, &mut rng);
+        D::create_split(&children, &mut m, self._f, &mut rng);
 
         for i in indices.iter() {
-            if let Some(n) = self._nodes.get(&i) {
+            if let Some(n) = self._nodes.get(i) {
                 let side = D::side(&m, n.vector(), &mut rng);
                 children_indices[side as usize].push(*i);
             }
