@@ -1,5 +1,5 @@
-use rand::rngs::StdRng;
 use num::ToPrimitive;
+use rand::rngs::StdRng;
 use serde::{Deserialize, Serialize};
 
 use crate::distance::{normalize, two_means, Distance, NodeImpl};
@@ -80,7 +80,7 @@ impl Distance<f64> for Euclidean {
         dot
     }
 
-    fn side(n: &Self::Node, y: &[f64], rng:  &mut StdRng) -> bool {
+    fn side(n: &Self::Node, y: &[f64], rng: &mut StdRng) -> bool {
         let dot = Self::margin(n, y);
 
         if dot != 0.0 {

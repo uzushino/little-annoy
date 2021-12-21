@@ -2,12 +2,12 @@ use crate::distance::{Distance, NodeImpl};
 use crate::item::Item;
 use crate::{random_flip, Numeric};
 
+use rand::prelude::SeedableRng;
+use rand::rngs::StdRng;
 use std::collections::BinaryHeap;
 use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::usize;
-use rand::prelude::SeedableRng;
-use rand::rngs::StdRng;
 
 #[allow(non_snake_case)]
 pub struct Annoy<T: Item, D>
@@ -137,7 +137,7 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
                 let side = D::side(&m, n.vector(), &mut rng);
                 children_indices[side as usize].push(*i);
             }
-        };
+        }
 
         while children_indices[0].is_empty() || children_indices[1].is_empty() {
             children_indices[0].clear();

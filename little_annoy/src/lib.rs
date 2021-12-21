@@ -1,5 +1,5 @@
-use rand::Rng;
 use rand::rngs::StdRng;
+use rand::Rng;
 use std::cmp::Ordering;
 
 pub mod ann;

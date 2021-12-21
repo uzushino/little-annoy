@@ -1,5 +1,5 @@
-use rand::Rng;
 use rand::rngs::StdRng;
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 
 use crate::distance::{Distance, NodeImpl};

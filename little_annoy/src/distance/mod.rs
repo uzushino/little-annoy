@@ -1,5 +1,5 @@
-use rand::Rng;
 use rand::rngs::StdRng;
+use rand::Rng;
 
 pub mod angular;
 pub mod euclidean;
@@ -47,7 +47,11 @@ pub fn to_f64_slice<T: num::ToPrimitive + Copy>(v: &[T]) -> Vec<f64> {
     c
 }
 
-fn two_means<T: Item, D: Distance<T>>(rng: &mut StdRng, nodes: &[D::Node], f: usize) -> (Vec<T>, Vec<T>) {
+fn two_means<T: Item, D: Distance<T>>(
+    rng: &mut StdRng,
+    nodes: &[D::Node],
+    f: usize,
+) -> (Vec<T>, Vec<T>) {
     let count = nodes.len();
     let i: u64 = rng.gen::<u64>() % count as u64;
     let mut j: u64 = rng.gen::<u64>() % (count - 1) as u64;
