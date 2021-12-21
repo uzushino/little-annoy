@@ -1,2 +1,1 @@
-single-char-binding-names-threshold = 5
-many_single_char_names = 10
+single-char-binding-names-threshold = 10
