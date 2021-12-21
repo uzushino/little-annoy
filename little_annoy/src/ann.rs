@@ -2,6 +2,8 @@ use crate::distance::{Distance, NodeImpl};
 use crate::item::Item;
 use crate::{random_flip, Numeric};
 
+use rand::prelude::SeedableRng;
+use rand::rngs::StdRng;
 use std::collections::BinaryHeap;
 use std::collections::HashMap;
 use std::marker::PhantomData;
@@ -20,6 +22,7 @@ where
     pub _nodes: HashMap<i64, D::Node>,
     pub _roots: Vec<i64>,
 
+    pub _seed: Option<u64>,
     pub t: PhantomData<T>,
 }
 
@@ -32,8 +35,13 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
             _n_nodes: 0,
             _f: f,
             _K: 6,
+            _seed: None,
             t: PhantomData,
         }
+    }
+
+    pub fn set_seed(&mut self, seed: u64) {
+        self._seed = Some(seed);
     }
 
     pub fn add_item(&mut self, item: i64, w: &[T]) {
@@ -89,18 +97,18 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
         self._get_all_nns(v.to_vec(), n, search_k)
     }
 
-    fn _make_tree(&mut self, indices: &Vec<i64>) -> i64 {
+    fn _make_tree(&mut self, indices: &[i64]) -> i64 {
         if indices.len() == 1 {
             return indices[0];
         }
 
         if indices.len() <= (self._K as usize) {
             let item = self._n_nodes;
-            self._n_nodes = self._n_nodes + 1;
+            self._n_nodes += 1;
 
             let m = self._nodes.entry(item).or_insert(D::Node::new(self._f));
             m.set_descendant(indices.len());
-            m.set_children(indices.clone());
+            m.set_children(indices.to_owned());
 
             return item;
         }
@@ -108,7 +116,7 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
         let mut children: Vec<D::Node> = Vec::default();
 
         indices.iter().for_each(|index| {
-            if let Some(n) = self._nodes.get(&index) {
+            if let Some(n) = self._nodes.get(index) {
                 children.push(n.clone());
             }
         });
@@ -116,14 +124,20 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
         let children_indices = &mut [Vec::new(), Vec::new()];
         let mut m = D::Node::new(self._f);
 
-        D::create_split(&mut children, &mut m, self._f);
+        let mut rng = if let Some(seed) = self._seed {
+            SeedableRng::seed_from_u64(seed)
+        } else {
+            StdRng::from_entropy()
+        };
 
-        indices.iter().for_each(|index| {
-            if let Some(n) = self._nodes.get(&index) {
-                let side = D::side(&m, n.vector());
-                children_indices[side as usize].push(*index);
+        D::create_split(&children, &mut m, self._f, &mut rng);
+
+        for i in indices.iter() {
+            if let Some(n) = self._nodes.get(i) {
+                let side = D::side(&m, n.vector(), &mut rng);
+                children_indices[side as usize].push(*i);
             }
-        });
+        }
 
         while children_indices[0].is_empty() || children_indices[1].is_empty() {
             children_indices[0].clear();
@@ -131,7 +145,7 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
 
             indices
                 .iter()
-                .for_each(|j| children_indices[random_flip() as usize].push(*j));
+                .for_each(|j| children_indices[random_flip(&mut rng) as usize].push(*j));
         }
 
         let flip = if children_indices[0].len() > children_indices[1].len() {

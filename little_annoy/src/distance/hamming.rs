@@ -1,6 +1,9 @@
+use rand::rngs::StdRng;
+use rand::Rng;
+use serde::{Deserialize, Serialize};
+
 use crate::distance::{Distance, NodeImpl};
 use crate::item::Item;
-use serde::{Deserialize, Serialize};
 
 pub struct Hamming {}
 
@@ -74,7 +77,7 @@ impl<T: Item> Distance<T> for Hamming {
         T::from_i64(r).unwrap()
     }
 
-    fn side(n: &Self::Node, y: &[T]) -> bool {
+    fn side(n: &Self::Node, y: &[T], _rng: &mut StdRng) -> bool {
         Self::margin(n, y) > T::zero()
     }
 
@@ -95,17 +98,17 @@ impl<T: Item> Distance<T> for Hamming {
         distance
     }
 
-    fn create_split(nodes: &[Self::Node], n: &mut Self::Node, f: usize) {
+    fn create_split(nodes: &[Self::Node], n: &mut Self::Node, f: usize, rng: &mut StdRng) {
         let mut cur_size = 0;
         let mut i = 0;
 
         (0..MAX_ITERATIONS).for_each(|_| {
-            let rnd = rand::random::<usize>() % f;
+            let rnd = rng.gen::<usize>() % f;
             n.v[0] = T::from_usize(rnd).unwrap();
             cur_size = 0;
 
             for node in nodes.iter() {
-                if Self::side(node, &n.v) {
+                if Self::side(node, &n.v, rng) {
                     cur_size += 1;
                 }
             }
@@ -123,7 +126,7 @@ impl<T: Item> Distance<T> for Hamming {
                 cur_size = 0;
 
                 for node in nodes.iter() {
-                    if Self::side(node, &n.v) {
+                    if Self::side(node, &n.v, rng) {
                         cur_size += 1;
                     }
                 }

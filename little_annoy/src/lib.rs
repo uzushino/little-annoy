@@ -1,3 +1,5 @@
+use rand::rngs::StdRng;
+use rand::Rng;
 use std::cmp::Ordering;
 
 pub mod ann;
@@ -28,6 +30,6 @@ impl Ord for Numeric<f64> {
     }
 }
 
-fn random_flip() -> bool {
-    rand::random::<bool>()
+fn random_flip(rng: &mut StdRng) -> bool {
+    rng.gen::<bool>()
 }

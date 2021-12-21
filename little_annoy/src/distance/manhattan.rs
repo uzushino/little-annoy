@@ -1,3 +1,4 @@
+use rand::rngs::StdRng;
 use serde::{Deserialize, Serialize};
 
 use crate::distance::{normalize, two_means, Distance, NodeImpl};
@@ -74,14 +75,14 @@ impl Distance<f64> for Manhattan {
         dot
     }
 
-    fn side(n: &Self::Node, y: &[f64]) -> bool {
+    fn side(n: &Self::Node, y: &[f64], rng: &mut StdRng) -> bool {
         let dot = Self::margin(n, y);
 
         if dot != 0.0 {
             return dot > 0.0;
         }
 
-        random_flip()
+        random_flip(rng)
     }
 
     fn distance(x: &[f64], y: &[f64], f: usize) -> f64 {
@@ -98,8 +99,8 @@ impl Distance<f64> for Manhattan {
         distance.max(0.0)
     }
 
-    fn create_split(nodes: &[Self::Node], n: &mut Self::Node, f: usize) {
-        let (best_iv, best_jv) = two_means::<f64, Manhattan>(nodes, f);
+    fn create_split(nodes: &[Self::Node], n: &mut Self::Node, f: usize, rng: &mut StdRng) {
+        let (best_iv, best_jv) = two_means::<f64, Manhattan>(rng, nodes, f);
 
         for z in 0..f {
             n.v[z] = best_iv[z] - best_jv[z];
