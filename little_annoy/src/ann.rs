@@ -8,6 +8,11 @@ use std::collections::BinaryHeap;
 use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::usize;
+use std::io::BufWriter;
+use std::fs::File;
+use std::path::Path;
+
+use bincode;
 
 #[allow(non_snake_case)]
 pub struct Annoy<T: Item, D>
@@ -248,5 +253,11 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
         }
 
         (result, distances)
+    }
+
+    pub fn save(self, filename: &Path) {
+        let xs: Vec<u8> = bincode::serialize(&self._nodes).unwrap();
+        let mut f = BufWriter::new(File::create(filename.as_os_str()).unwrap());
+        bincode::serialize_into(&mut f, &xs).unwrap();
     }
 }

@@ -63,7 +63,7 @@ impl<T: Item> NodeImpl<T> for Node<T> {
     }
 }
 
-impl<T: Item> Distance<T> for Angular {
+impl<T: Item + serde::Serialize> Distance<T> for Angular {
     type Node = Node<T>;
 
     fn margin(n: &Self::Node, y: &[T]) -> T {

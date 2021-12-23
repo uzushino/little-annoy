@@ -1,5 +1,6 @@
 use rand::rngs::StdRng;
 use rand::Rng;
+use serde;
 
 pub mod angular;
 pub mod euclidean;
@@ -106,7 +107,7 @@ pub trait NodeImpl<T> {
 }
 
 pub trait Distance<T: Item> {
-    type Node: NodeImpl<T> + Clone;
+    type Node: NodeImpl<T> + Clone + serde::Serialize;
 
     fn distance(x: &[T], y: &[T], f: usize) -> T;
 

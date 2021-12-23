@@ -65,7 +65,7 @@ impl<T: Item> NodeImpl<T> for Node<T> {
 
 const MAX_ITERATIONS: usize = 20;
 
-impl<T: Item> Distance<T> for Hamming {
+impl<T: Item + serde::Serialize> Distance<T> for Hamming {
     type Node = Node<T>;
 
     fn margin(n: &Self::Node, y: &[T]) -> T {
