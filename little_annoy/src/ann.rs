@@ -6,11 +6,11 @@ use rand::prelude::SeedableRng;
 use rand::rngs::StdRng;
 use std::collections::BinaryHeap;
 use std::collections::HashMap;
-use std::marker::PhantomData;
-use std::usize;
-use std::io::BufWriter;
 use std::fs::File;
+use std::io::BufWriter;
+use std::marker::PhantomData;
 use std::path::Path;
+use std::usize;
 
 use bincode;
 
