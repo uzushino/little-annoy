@@ -7,7 +7,7 @@ use rand::rngs::StdRng;
 use std::collections::BinaryHeap;
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::BufWriter;
+use std::io::{BufWriter, BufReader};
 use std::marker::PhantomData;
 use std::path::Path;
 use std::usize;
@@ -258,6 +258,12 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
     pub fn save(self, filename: &Path) {
         let xs: Vec<u8> = bincode::serialize(&self._nodes).unwrap();
         let mut f = BufWriter::new(File::create(filename.as_os_str()).unwrap());
+
         bincode::serialize_into(&mut f, &xs).unwrap();
+    }
+
+    pub fn load(mut self, filename: &Path) {
+        let f = BufReader::new(File::create(filename.as_os_str()).unwrap());
+        self._nodes = bincode::deserialize_from(f).unwrap();
     }
 }
