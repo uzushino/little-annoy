@@ -68,7 +68,7 @@ impl Distance<f64> for Manhattan {
     fn margin(n: &Self::Node, y: &[f64]) -> f64 {
         let mut dot: f64 = n.a;
 
-        for z in 0..y.len() {
+        for (z, _y) in y.iter().enumerate() {
             dot += n.v[z] * y[z];
         }
 
