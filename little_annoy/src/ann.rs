@@ -7,7 +7,7 @@ use rand::rngs::StdRng;
 use std::collections::BinaryHeap;
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::{BufWriter, BufReader};
+use std::io::{BufReader, BufWriter};
 use std::marker::PhantomData;
 use std::path::Path;
 use std::usize;
