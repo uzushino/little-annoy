@@ -223,7 +223,7 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
             }
         }
 
-        nns.sort();
+        nns.sort_unstable();
 
         let mut nns_dist = Vec::new();
         let mut last = -1;
@@ -265,5 +265,15 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
     pub fn load(mut self, filename: &Path) {
         let f = BufReader::new(File::create(filename.as_os_str()).unwrap());
         self._nodes = bincode::deserialize_from(f).unwrap();
+    }
+
+    fn _get(&self, i: i64) -> &D::Node {
+        &self._nodes[&i]
+    }
+
+    pub fn get_distance(self, i: i64, j: i64) -> f64 {
+        let dist = D::distance(self._get(i).vector(), self._get(j).vector(), self._f);
+
+        D::normalized_distance(dist.to_f64().unwrap_or(0.))
     }
 }
