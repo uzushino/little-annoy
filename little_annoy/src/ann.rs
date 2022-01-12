@@ -15,6 +15,7 @@ struct AnnResult<T>(T, i64);
 
 impl<T: PartialEq> Eq for AnnResult<T> {}
 
+#[allow(clippy::derive_ord_xor_partial_ord)]
 impl<T: PartialOrd> Ord for AnnResult<T> {
     fn cmp(&self, other: &AnnResult<T>) -> std::cmp::Ordering {
         self.0.partial_cmp(&other.0).unwrap()
