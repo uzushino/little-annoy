@@ -4,11 +4,11 @@ use crate::{random_flip, Numeric};
 
 use rand::prelude::SeedableRng;
 use rand::rngs::StdRng;
+use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::usize;
-use std::cmp::Reverse;
 
 #[derive(PartialEq, PartialOrd)]
 struct AnnResult<T>(T, i64);
