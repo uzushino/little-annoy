@@ -8,6 +8,9 @@ use std::collections::BinaryHeap;
 use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::usize;
+use rand::Rng;
+
+use rayon::prelude::*;
 
 #[allow(non_snake_case)]
 pub struct Annoy<T: Item, D>
@@ -144,8 +147,10 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
             children_indices[1].clear();
 
             indices
-                .iter()
-                .for_each(|j| children_indices[random_flip(&mut rng) as usize].push(*j));
+                .par_iter()
+                .for_each_with(rng, |ref r, j| {
+                    let _hoge: i64 = r.gen();
+                });
         }
 
         let flip = if children_indices[0].len() > children_indices[1].len() {
