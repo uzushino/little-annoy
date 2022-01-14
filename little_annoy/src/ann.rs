@@ -100,6 +100,37 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
         self._get_all_nns(v.to_vec(), n, search_k)
     }
 
+    fn random_split_index(&self, children: &Vec<D::Node>) -> (Vec<i64>, Vec<i64>) {
+        let children_indices = &mut [Vec::new(), Vec::new()];
+        let mut m = D::Node::new(self._f);
+
+        let mut rng = if let Some(seed) = self._seed {
+            SeedableRng::seed_from_u64(seed)
+        } else {
+            StdRng::from_entropy()
+        };
+
+        D::create_split(children, &mut m, self._f, &mut rng);
+
+        for i in indices.iter() {
+            if let Some(n) = self._nodes.get(i) {
+                let side = D::side(&m, n.vector(), &mut rng);
+                children_indices[side as usize].push(*i);
+            }
+        }
+
+        while children_indices[0].is_empty() || children_indices[1].is_empty() {
+            children_indices[0].clear();
+            children_indices[1].clear();
+
+            indices
+                .iter()
+                .for_each_with(rng, |ref r, j| {
+                    let _hoge: i64 = r.gen();
+                });
+        }
+    }
+
     fn _make_tree(&mut self, indices: &[i64]) -> i64 {
         if indices.len() == 1 {
             return indices[0];
@@ -124,34 +155,7 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
             }
         });
 
-        let children_indices = &mut [Vec::new(), Vec::new()];
-        let mut m = D::Node::new(self._f);
-
-        let mut rng = if let Some(seed) = self._seed {
-            SeedableRng::seed_from_u64(seed)
-        } else {
-            StdRng::from_entropy()
-        };
-
-        D::create_split(&children, &mut m, self._f, &mut rng);
-
-        for i in indices.iter() {
-            if let Some(n) = self._nodes.get(i) {
-                let side = D::side(&m, n.vector(), &mut rng);
-                children_indices[side as usize].push(*i);
-            }
-        }
-
-        while children_indices[0].is_empty() || children_indices[1].is_empty() {
-            children_indices[0].clear();
-            children_indices[1].clear();
-
-            indices
-                .par_iter()
-                .for_each_with(rng, |ref r, j| {
-                    let _hoge: i64 = r.gen();
-                });
-        }
+        let children_indices = self.random_split_index();
 
         let flip = if children_indices[0].len() > children_indices[1].len() {
             1
