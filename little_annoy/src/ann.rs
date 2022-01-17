@@ -9,6 +9,7 @@ use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::usize;
 use rand::Rng;
+use rand::thread_rng;
 
 use rayon::prelude::*;
 
@@ -100,10 +101,49 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
         self._get_all_nns(v.to_vec(), n, search_k)
     }
 
-    fn random_split_index(&self, children: &Vec<D::Node>) -> (Vec<i64>, Vec<i64>) {
-        let children_indices = &mut [Vec::new(), Vec::new()];
-        let mut m = D::Node::new(self._f);
+    #[cfg(not(feature="parallel_build"))]
+    fn random_split_index(&self, m: &mut D::Node, indices: &[i64], children: &Vec<D::Node>) -> (Vec<i64>, Vec<i64>) {
+        let mut rng = if let Some(seed) = self._seed {
+            SeedableRng::seed_from_u64(seed)
+        } else {
+            StdRng::from_entropy()
+        };
 
+        D::create_split(children, m, self._f, &mut rng);
+
+        let mut children_indices = (Vec::new(), Vec::new());
+
+        for i in indices.iter() {
+            if let Some(n) = self._nodes.get(i) {
+                let side = D::side(&m, n.vector(), &mut rng);
+                if side {
+                    children_indices.0.push(*i);
+                } else {
+                    children_indices.1.push(*i);
+                }
+            }
+        }
+
+        while children_indices.0.is_empty() || children_indices.1.is_empty() {
+            children_indices.0.clear();
+            children_indices.1.clear();
+
+            indices
+                .iter()
+                .for_each(|j| {
+                    if random_flip(&mut rng) {
+                        children_indices.0.push(*j);
+                    } else {
+                        children_indices.1.push(*j);
+                    }
+                });
+        }
+
+        children_indices
+    }
+
+    #[cfg(feature="parallel_build")]
+    fn random_split_index(&self, m: &D::Node, indices: &[i64], children: &Vec<D::Node>) -> (Vec<i64>, Vec<i64>) {
         let mut rng = if let Some(seed) = self._seed {
             SeedableRng::seed_from_u64(seed)
         } else {
@@ -112,29 +152,43 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
 
         D::create_split(children, &mut m, self._f, &mut rng);
 
+        let mut children_indices = (Vec::new(), Vec::new());
+
         for i in indices.iter() {
             if let Some(n) = self._nodes.get(i) {
                 let side = D::side(&m, n.vector(), &mut rng);
-                children_indices[side as usize].push(*i);
+                if side {
+                    children_indices.0.push(*i);
+                } else {
+                    children_indices.1.push(*i);
+                }
             }
         }
 
-        while children_indices[0].is_empty() || children_indices[1].is_empty() {
-            children_indices[0].clear();
-            children_indices[1].clear();
+        while children_indices.0.is_empty() || children_indices.1.is_empty() {
+            children_indices.0.clear();
+            children_indices.1.clear();
 
             indices
-                .iter()
-                .for_each_with(rng, |ref r, j| {
-                    let _hoge: i64 = r.gen();
+                .par_iter()
+                .for_each_with(|| thread_rng(), |gen, j| {
+                    if gen().gen_range(0..1) == 1 {
+                        children_indices.0.push(*j);
+                    } else {
+                        children_indices.1.push(*j);
+                    }
                 });
         }
+
+        children_indices
     }
 
     fn _make_tree(&mut self, indices: &[i64]) -> i64 {
         if indices.len() == 1 {
             return indices[0];
         }
+
+        let mut m = D::Node::new(self._f);
 
         if indices.len() <= (self._K as usize) {
             let item = self._n_nodes;
@@ -148,16 +202,15 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
         }
 
         let mut children: Vec<D::Node> = Vec::default();
-
         indices.iter().for_each(|index| {
             if let Some(n) = self._nodes.get(index) {
                 children.push(n.clone());
             }
         });
 
-        let children_indices = self.random_split_index();
+        let children_indices = self.random_split_index(&mut m, indices, &children);
 
-        let flip = if children_indices[0].len() > children_indices[1].len() {
+        let flip = if children_indices.0.len() > children_indices.1.len() {
             1
         } else {
             0
@@ -167,7 +220,11 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
 
         for side in 0..2 {
             let ii = side ^ flip;
-            let a = &children_indices[ii];
+            let a = if ii == 0 {
+                &children_indices.0
+            } else {
+                &children_indices.1
+            };
 
             let mut v = m.children();
             v[ii] = self._make_tree(a);

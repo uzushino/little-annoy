@@ -10,7 +10,8 @@ edition = "2018"
 rand = "0.8.3"
 serde = { version = "1.0", features = ["derive"] }
 num = "0.4"
-rayon = "*"
+rayon = { version = "*", optional = true }
+
 
 [dev-dependencies]
 mnist = "0.4.1"
@@ -23,3 +24,7 @@ bit-vec = "*"
 [[bench]]
 name = "bench_main"
 harness = false
+
+[features]
+default = []
+parallel_build = [ "rayon" ]
