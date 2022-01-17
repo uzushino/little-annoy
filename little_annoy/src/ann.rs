@@ -8,9 +8,10 @@ use std::collections::BinaryHeap;
 use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::usize;
-use rand::Rng;
-use rand::thread_rng;
 
+#[cfg(feature="parallel_build")]
+use rand::thread_rng;
+#[cfg(feature="parallel_build")]
 use rayon::prelude::*;
 
 #[allow(non_snake_case)]
