@@ -6,12 +6,9 @@ use rand::prelude::SeedableRng;
 use rand::rngs::StdRng;
 use std::collections::BinaryHeap;
 use std::collections::HashMap;
-use std::fs::File;
-use std::io::{BufReader, BufWriter};
+use std::io::BufWriter;
 use std::marker::PhantomData;
-use std::path::Path;
 use std::usize;
-use std::io::Read;
 
 use bincode;
 
@@ -256,16 +253,19 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
         (result, distances)
     }
 
-    pub fn save<W>(&self, w: W) where W: std::io::Write {
+    pub fn save<W>(&self, w: W)
+    where
+        W: std::io::Write,
+    {
         let mut f = BufWriter::new(w);
         bincode::serialize_into(&mut f, &self._nodes).unwrap();
     }
 
     pub fn load(&mut self, file: &str) -> bool {
-        let mut file = std::fs::File::open(file).unwrap();
-        self._nodes = bincode::deserialize_from(file).unwrap();
+        let file = std::fs::File::open(file).unwrap();
         let mut m = -1;
 
+        self._nodes = bincode::deserialize_from(file).unwrap();
         self._roots = Vec::default();
 
         for (i, node) in self._nodes.iter() {

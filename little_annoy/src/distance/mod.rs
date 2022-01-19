@@ -1,6 +1,5 @@
 use rand::rngs::StdRng;
 use rand::Rng;
-use serde;
 
 pub mod angular;
 pub mod euclidean;
