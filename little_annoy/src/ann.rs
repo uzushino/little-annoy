@@ -4,6 +4,7 @@ use crate::{random_flip, Numeric};
 
 use rand::prelude::SeedableRng;
 use rand::rngs::StdRng;
+use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 use std::collections::HashMap;
 use std::io::BufWriter;
@@ -11,6 +12,18 @@ use std::marker::PhantomData;
 use std::usize;
 
 use bincode;
+
+#[derive(PartialEq, PartialOrd)]
+struct AnnResult<T>(T, i64);
+
+impl<T: PartialEq> Eq for AnnResult<T> {}
+
+#[allow(clippy::derive_ord_xor_partial_ord)]
+impl<T: PartialOrd> Ord for AnnResult<T> {
+    fn cmp(&self, other: &AnnResult<T>) -> std::cmp::Ordering {
+        self.0.partial_cmp(&other.0).unwrap()
+    }
+}
 
 #[allow(non_snake_case)]
 pub struct Annoy<T: Item, D>
@@ -223,7 +236,7 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
 
         nns.sort_unstable();
 
-        let mut nns_dist = Vec::new();
+        let mut nns_dist: BinaryHeap<Reverse<AnnResult<T>>> = BinaryHeap::new();
         let mut last = -1;
 
         for j in &nns {
@@ -234,18 +247,16 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
             last = *j;
             let mut _n = nodes.entry(*j).or_insert_with(|| D::Node::new(f));
             let dist = D::distance(v, _n.vector(), self._f);
-            nns_dist.push((dist, *j));
+            nns_dist.push(Reverse(AnnResult(dist, *j)));
         }
 
         let m = nns_dist.len();
         let p = if n < m { n } else { m } as usize;
 
-        nns_dist.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
-
         let mut distances = Vec::new();
         let mut result = Vec::new();
 
-        for (dist, idx) in nns_dist.iter().take(p) {
+        for Reverse(AnnResult(dist, idx)) in nns_dist.iter().take(p) {
             distances.push(D::normalized_distance(T::to_f64(dist).unwrap()));
             result.push(*idx)
         }
