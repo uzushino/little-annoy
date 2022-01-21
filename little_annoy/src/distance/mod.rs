@@ -106,7 +106,7 @@ pub trait NodeImpl<T> {
 }
 
 pub trait Distance<T: Item> {
-    type Node: NodeImpl<T> + Clone;
+    type Node: NodeImpl<T> + Clone + serde::Serialize + serde::de::DeserializeOwned;
 
     fn distance(x: &[T], y: &[T], f: usize) -> T;
 

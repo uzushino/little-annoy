@@ -7,8 +7,11 @@ use rand::rngs::StdRng;
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 use std::collections::HashMap;
+use std::io::BufWriter;
 use std::marker::PhantomData;
 use std::usize;
+
+use bincode;
 
 #[derive(PartialEq, PartialOrd)]
 struct AnnResult<T>(T, i64);
@@ -259,6 +262,37 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
         }
 
         (result, distances)
+    }
+
+    pub fn save<W>(&self, w: W)
+    where
+        W: std::io::Write,
+    {
+        let mut f = BufWriter::new(w);
+        bincode::serialize_into(&mut f, &self._nodes).unwrap();
+    }
+
+    pub fn load(&mut self, file: &str) -> bool {
+        let file = std::fs::File::open(file).unwrap();
+        let mut m = -1;
+
+        self._nodes = bincode::deserialize_from(file).unwrap();
+        self._roots = Vec::default();
+
+        for (i, node) in self._nodes.iter() {
+            let k = node.descendant() as i64;
+
+            if m == -1 || k == m {
+                self._roots.push(*i);
+                m = k;
+            } else {
+                break;
+            }
+        }
+
+        self._n_items = m;
+
+        true
     }
 
     fn _get(&self, i: i64) -> &D::Node {
