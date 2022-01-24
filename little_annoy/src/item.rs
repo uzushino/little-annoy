@@ -3,7 +3,6 @@ pub trait Item:
     + num::Zero
     + num::One
     + num::traits::NumAssign
-    + num::traits::Signed
     + num::ToPrimitive
     + num::FromPrimitive
     + PartialEq
@@ -33,3 +32,7 @@ impl Item for f32 {}
 impl Item for i64 {}
 
 impl Item for i32 {}
+
+impl Item for u64 {}
+
+impl Item for u32 {}
