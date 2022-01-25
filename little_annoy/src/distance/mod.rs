@@ -65,8 +65,8 @@ fn two_means<T: Item, D: Distance<T>>(
 
     for _ in 0..ITERATION_STEPS {
         let k = rng.gen::<usize>() % count as usize;
-        let di = ic * D::distance(nodes[i as usize].vector(), nodes[k].vector(), f);
-        let dj = jc * D::distance(nodes[j as usize].vector(), nodes[k].vector(), f);
+        let di = ic * D::distance(&iv, nodes[k].vector(), f);
+        let dj = jc * D::distance(&jv, nodes[k].vector(), f);
         let nk = &nodes[k].vector();
 
         if di < dj {
