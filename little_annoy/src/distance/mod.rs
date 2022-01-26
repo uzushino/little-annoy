@@ -14,13 +14,7 @@ pub use manhattan::Manhattan;
 use crate::item::Item;
 
 fn get_norm(v: &[f64]) -> f64 {
-    let mut sq_norm = 0.0;
-
-    for z in 0..v.len() {
-        sq_norm += v[z as usize] * v[z as usize];
-    }
-
-    sq_norm.sqrt()
+    v.iter().fold(0.0, |acc, x| acc + x.powf(2.0)).sqrt()
 }
 
 fn normalize<T: num::Num + num::ToPrimitive + num::FromPrimitive + Copy>(v: &[T]) -> Vec<T> {
