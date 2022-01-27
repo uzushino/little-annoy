@@ -129,13 +129,12 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
             return item;
         }
 
-        let mut children: Vec<D::Node> = Vec::default();
-
-        indices.iter().for_each(|index| {
-            if let Some(n) = self._nodes.get(index) {
-                children.push(n.clone());
-            }
-        });
+        let children: Vec<D::Node> = indices
+            .iter()
+            .map(|index| self._nodes.get(index))
+            .flatten()
+            .map(|n| n.clone())
+            .collect::<Vec<_>>();
 
         let children_indices = &mut [Vec::new(), Vec::new()];
         let mut m = D::Node::new(self._f);
