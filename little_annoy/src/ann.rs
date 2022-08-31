@@ -271,11 +271,13 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
         bincode::serialize_into(&mut f, &self._nodes).unwrap();
     }
 
-    pub fn load(&mut self, file: &str) -> bool {
-        let file = std::fs::File::open(file).unwrap();
+    pub fn load<R>(&mut self, reader: R) -> bool
+    where
+        R: std::io::BufRead,
+    {
         let mut m = -1;
 
-        self._nodes = bincode::deserialize_from(file).unwrap();
+        self._nodes = bincode::deserialize_from(reader).unwrap();
         self._roots = Vec::default();
 
         for (i, node) in self._nodes.iter() {

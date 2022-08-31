@@ -2,7 +2,6 @@ use little_annoy::{Annoy, Euclidean};
 
 fn print_distance(ann: &mut Annoy<f64, Euclidean>) {
     let (result, distance) = ann.get_nns_by_vector(&[1.0, 1.0], 10, -1);
-
     for (i, id) in result.iter().enumerate() {
         println!("result = {}, distance = {}", *id, distance[i]);
     }
@@ -24,9 +23,13 @@ fn main() {
     println!("Save nodes.");
     let _ = ann.save(file);
 
+    println!();
+
     println!("load nodes.");
     let mut ann: Annoy<f64, Euclidean> = Annoy::new(2);
-    let _ = ann.load("/tmp/hoge.db");
+
+    let bin = std::fs::File::open("/tmp/hoge.db").unwrap();
+    let _ = ann.load(std::io::BufReader::new(bin));
 
     print_distance(&mut ann);
 }
