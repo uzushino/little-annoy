@@ -11,6 +11,7 @@ use std::usize;
 
 #[cfg(feature="parallel_build")]
 use rand::thread_rng;
+use rand::Rng;
 #[cfg(feature="parallel_build")]
 use rayon::prelude::*;
 
@@ -144,7 +145,7 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
     }
 
     #[cfg(feature="parallel_build")]
-    fn random_split_index(&self, m: &D::Node, indices: &[i64], children: &Vec<D::Node>) -> (Vec<i64>, Vec<i64>) {
+    fn random_split_index(&self, m: &mut D::Node, indices: &[i64], children: &Vec<D::Node>) -> (Vec<i64>, Vec<i64>) {
         let mut rng = if let Some(seed) = self._seed {
             SeedableRng::seed_from_u64(seed)
         } else {
@@ -153,35 +154,36 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
 
         D::create_split(children, &mut m, self._f, &mut rng);
 
-        let mut children_indices = (Vec::new(), Vec::new());
+        let mut children_indices1 = Vec::new();
+        let mut children_indices2 = Vec::new();
 
         for i in indices.iter() {
             if let Some(n) = self._nodes.get(i) {
                 let side = D::side(&m, n.vector(), &mut rng);
                 if side {
-                    children_indices.0.push(*i);
+                    children_indices1.push(i.clone());
                 } else {
-                    children_indices.1.push(*i);
+                    children_indices2.push(i.clone());
                 }
             }
         }
 
-        while children_indices.0.is_empty() || children_indices.1.is_empty() {
-            children_indices.0.clear();
-            children_indices.1.clear();
+        while children_indices1.is_empty() || children_indices2.is_empty() {
+            children_indices1.clear();
+            children_indices2.clear();
 
             indices
-                .par_iter()
-                .for_each_with(|| thread_rng(), |gen, j| {
+                .par_iter_mut()
+                .for_each_with(|| thread_rng(), move |gen, j| {
                     if gen().gen_range(0..1) == 1 {
-                        children_indices.0.push(*j);
+                        children_indices1.push(j.clone());
                     } else {
-                        children_indices.1.push(*j);
+                        children_indices2.push(j.clone());
                     }
                 });
         }
 
-        children_indices
+        (children_indices1, children_indices2)
     }
 
     fn _make_tree(&mut self, indices: &[i64]) -> i64 {
