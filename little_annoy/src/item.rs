@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 pub trait Item:
     num::Num
     + num::Zero
@@ -9,6 +11,8 @@ pub trait Item:
     + PartialOrd
     + Clone
     + Copy
+    + Debug
+    + std::fmt::Display
 {
     fn sqrt(self) -> Self {
         let v = Self::to_f32(&self)

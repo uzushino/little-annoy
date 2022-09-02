@@ -196,7 +196,7 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
         D: Distance<T>,
     {
         let mut nodes = self._nodes.clone();
-        let mut q: BinaryHeap<(Numeric<f64>, i64)> = BinaryHeap::new();
+        let mut q: BinaryHeap<(Numeric<T>, i64)> = BinaryHeap::new();
         let v = v.as_slice();
         let f = self._f;
 
@@ -205,14 +205,14 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
         }
 
         for root in self._roots.iter() {
-            q.push((Numeric(0.0), *root))
+            q.push((Numeric(T::zero()), *root))
         }
 
         let mut nns: Vec<i64> = Vec::new();
 
         while nns.len() < (search_k as usize) && !q.is_empty() {
             let top = q.peek().unwrap();
-            let d = top.0 .0;
+            let d: T = top.0.0;
             let i = top.1;
             let nd = nodes.entry(i).or_insert_with(|| D::Node::new(f));
 
@@ -228,8 +228,11 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
                 let a = T::zero() + margin;
                 let b = T::zero() - margin;
 
-                q.push((Numeric(d.min(T::to_f64(&a).unwrap())), nd.children()[1]));
-                q.push((Numeric(d.min(T::to_f64(&b).unwrap())), nd.children()[0]));
+                let a = Numeric(a);
+                let b = Numeric(b);
+
+                q.push((Numeric(d).min(a), nd.children()[1]));
+                q.push((Numeric(d).min(b), nd.children()[0]));
             }
         }
 
