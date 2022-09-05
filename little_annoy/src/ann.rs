@@ -212,7 +212,7 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
 
         while nns.len() < (search_k as usize) && !q.is_empty() {
             let top = q.peek().unwrap();
-            let d: T = top.0.0;
+            let d: T = top.0 .0;
             let i = top.1;
             let nd = nodes.entry(i).or_insert_with(|| D::Node::new(f));
 
