@@ -31,6 +31,7 @@ impl NodeImpl<f64> for Node {
         self.children[0] = 0;
         self.children[1] = 0;
         self.n_descendants = 1;
+        self.a = 0.;
         self.v = v.to_vec();
     }
 
@@ -80,7 +81,7 @@ impl Distance<f64> for Euclidean {
         dot
     }
 
-    fn side(n: &Self::Node, y: &[f64], rng: &mut StdRng) -> bool {
+    fn side(n: &Self::Node, y: &[f64], rng: &mut rand_chacha::ChaCha8Rng) -> bool {
         let dot = Self::margin(n, y);
 
         if dot != 0.0 {
@@ -105,7 +106,7 @@ impl Distance<f64> for Euclidean {
         distance.max(0.0).sqrt()
     }
 
-    fn create_split(nodes: &[Self::Node], n: &mut Self::Node, f: usize, rng: &mut StdRng) {
+    fn create_split(nodes: &[Self::Node], n: &mut Self::Node, f: usize, rng: &mut rand_chacha::ChaCha8Rng) {
         let (best_iv, best_jv) = two_means::<f64, Euclidean>(rng, nodes, f);
 
         for z in 0..f {
@@ -117,7 +118,7 @@ impl Distance<f64> for Euclidean {
         n.a = 0.0;
 
         for z in 0..f {
-            let v = -n.v[z].to_f64().unwrap_or_default() * (best_iv[z] + best_jv[z]) / 2.0;
+            let v = -n.v[z].to_f64().unwrap_or(0.0) * (best_iv[z] + best_jv[z]) / 2.0;
             n.a += v;
         }
     }

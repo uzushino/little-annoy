@@ -11,7 +11,7 @@ rand = "0.8.3"
 serde = { version = "1.0", features = ["derive"] }
 num = "0.4"
 rayon = { version = "*", optional = true }
-
+rand_chacha = "*"
 
 [dev-dependencies]
 mnist = "0.4.1"

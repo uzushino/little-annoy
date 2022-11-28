@@ -30,6 +30,6 @@ impl Ord for Numeric<f64> {
     }
 }
 
-fn random_flip(rng: &mut StdRng) -> bool {
+fn random_flip(rng: &mut rand_chacha::ChaCha8Rng) -> bool {
     rng.gen::<bool>()
 }

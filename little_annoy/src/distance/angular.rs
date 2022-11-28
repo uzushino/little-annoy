@@ -76,7 +76,7 @@ impl<T: Item> Distance<T> for Angular {
         dot
     }
 
-    fn side(n: &Self::Node, y: &[T], rng: &mut StdRng) -> bool {
+    fn side(n: &Self::Node, y: &[T], rng: &mut rand_chacha::ChaCha8Rng) -> bool {
         let dot = Self::margin(n, y);
 
         if dot != T::zero() {
@@ -116,7 +116,7 @@ impl<T: Item> Distance<T> for Angular {
         distance.max(0.0).sqrt()
     }
 
-    fn create_split(nodes: &[Self::Node], n: &mut Self::Node, f: usize, rng: &mut StdRng) {
+    fn create_split(nodes: &[Self::Node], n: &mut Self::Node, f: usize, rng: &mut rand_chacha::ChaCha8Rng) {
         let (best_iv, best_jv) = two_means::<T, Angular>(rng, nodes, f);
 
         for z in 0..f {

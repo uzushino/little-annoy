@@ -77,7 +77,7 @@ impl<T: Item> Distance<T> for Hamming {
         T::from_i64(r).unwrap()
     }
 
-    fn side(n: &Self::Node, y: &[T], _rng: &mut StdRng) -> bool {
+    fn side(n: &Self::Node, y: &[T], _rng: &mut rand_chacha::ChaCha8Rng) -> bool {
         Self::margin(n, y) > T::zero()
     }
 
@@ -98,7 +98,7 @@ impl<T: Item> Distance<T> for Hamming {
         distance
     }
 
-    fn create_split(nodes: &[Self::Node], n: &mut Self::Node, f: usize, rng: &mut StdRng) {
+    fn create_split(nodes: &[Self::Node], n: &mut Self::Node, f: usize, rng: &mut rand_chacha::ChaCha8Rng) {
         let mut cur_size = 0;
         let mut i = 0;
 

@@ -48,7 +48,7 @@ pub fn to_f64_slice<T: num::ToPrimitive + Copy>(v: &[T]) -> Vec<f64> {
 }
 
 fn two_means<T: Item, D: Distance<T>>(
-    rng: &mut StdRng,
+    rng: &mut rand_chacha::ChaCha8Rng,
     nodes: &[D::Node],
     f: usize,
 ) -> (Vec<T>, Vec<T>) {
@@ -110,9 +110,9 @@ pub trait Distance<T: Item> {
 
     fn distance(x: &[T], y: &[T], f: usize) -> T;
 
-    fn create_split(nodes: &[Self::Node], n: &mut Self::Node, f: usize, rng: &mut StdRng);
+    fn create_split(nodes: &[Self::Node], n: &mut Self::Node, f: usize, rng: &mut rand_chacha::ChaCha8Rng);
 
-    fn side(n: &Self::Node, y: &[T], rng: &mut StdRng) -> bool;
+    fn side(n: &Self::Node, y: &[T], rng: &mut rand_chacha::ChaCha8Rng) -> bool;
 
     fn margin(n: &Self::Node, y: &[T]) -> T;
 
