@@ -1,4 +1,3 @@
-use rand::rngs::StdRng;
 use rand::Rng;
 
 pub mod angular;

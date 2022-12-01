@@ -1,5 +1,4 @@
 use num::ToPrimitive;
-use rand::rngs::StdRng;
 use serde::{Deserialize, Serialize};
 
 use crate::distance::{normalize, two_means, Distance, NodeImpl};
