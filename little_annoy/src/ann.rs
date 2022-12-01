@@ -2,20 +2,34 @@ use crate::distance::{Distance, NodeImpl};
 use crate::item::Item;
 use crate::{random_flip, Numeric};
 
+use rand::prelude::SeedableRng;
+use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 use std::collections::HashMap;
+use std::io::BufWriter;
 use std::marker::PhantomData;
 use std::usize;
 
-use rand::thread_rng;
-use rand::Rng;
-use rand_chacha::rand_core::RngCore;
-use rand_chacha::{rand_core::SeedableRng, ChaCha8Rng};
+use rand_chacha::ChaCha8Rng;
 #[cfg(feature = "parallel_build")]
 use std::sync::{Arc, Mutex};
 
 #[cfg(feature = "parallel_build")]
 use rayon::prelude::*;
+
+use bincode;
+
+#[derive(PartialEq, PartialOrd)]
+struct AnnResult<T>(T, i64);
+
+impl<T: PartialEq> Eq for AnnResult<T> {}
+
+#[allow(clippy::derive_ord_xor_partial_ord)]
+impl<T: PartialOrd> Ord for AnnResult<T> {
+    fn cmp(&self, other: &AnnResult<T>) -> std::cmp::Ordering {
+        self.0.partial_cmp(&other.0).unwrap()
+    }
+}
 
 #[allow(non_snake_case)]
 pub struct Annoy<T: Item, D>
@@ -304,7 +318,7 @@ impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
         D: Distance<T>,
     {
         let mut nodes = self._nodes.clone();
-        let mut q: BinaryHeap<(Numeric<f64>, i64)> = BinaryHeap::new();
+        let mut q: BinaryHeap<(Numeric<T>, i64)> = BinaryHeap::new();
         let v = v.as_slice();
         let f = self._f;
 
@@ -313,14 +327,14 @@ impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
         }
 
         for root in self._roots.iter() {
-            q.push((Numeric(0.0), *root))
+            q.push((Numeric(T::zero()), *root))
         }
 
         let mut nns: Vec<i64> = Vec::new();
 
         while nns.len() < (search_k as usize) && !q.is_empty() {
             let top = q.peek().unwrap();
-            let d = top.0 .0;
+            let d: T = top.0 .0;
             let i = top.1;
             let nd = nodes.entry(i).or_insert_with(|| D::Node::new(f));
 
@@ -336,14 +350,17 @@ impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
                 let a = T::zero() + margin;
                 let b = T::zero() - margin;
 
-                q.push((Numeric(d.min(T::to_f64(&a).unwrap())), nd.children()[1]));
-                q.push((Numeric(d.min(T::to_f64(&b).unwrap())), nd.children()[0]));
+                let a = Numeric(a);
+                let b = Numeric(b);
+
+                q.push((Numeric(d).min(a), nd.children()[1]));
+                q.push((Numeric(d).min(b), nd.children()[0]));
             }
         }
 
         nns.sort_unstable();
 
-        let mut nns_dist = Vec::new();
+        let mut nns_dist: BinaryHeap<Reverse<AnnResult<T>>> = BinaryHeap::new();
         let mut last = -1;
 
         for j in &nns {
@@ -354,23 +371,54 @@ impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
             last = *j;
             let mut _n = nodes.entry(*j).or_insert_with(|| D::Node::new(f));
             let dist = D::distance(v, _n.vector(), self._f);
-            nns_dist.push((dist, *j));
+            nns_dist.push(Reverse(AnnResult(dist, *j)));
         }
 
         let m = nns_dist.len();
         let p = if n < m { n } else { m } as usize;
 
-        nns_dist.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
-
         let mut distances = Vec::new();
         let mut result = Vec::new();
 
-        for (dist, idx) in nns_dist.iter().take(p) {
+        for Reverse(AnnResult(dist, idx)) in nns_dist.iter().take(p) {
             distances.push(D::normalized_distance(T::to_f64(dist).unwrap()));
             result.push(*idx)
         }
 
         (result, distances)
+    }
+
+    pub fn save<W>(&self, w: W)
+    where
+        W: std::io::Write,
+    {
+        let mut f = BufWriter::new(w);
+        bincode::serialize_into(&mut f, &self._nodes).unwrap();
+    }
+
+    pub fn load<R>(&mut self, reader: R) -> bool
+    where
+        R: std::io::BufRead,
+    {
+        let mut m = -1;
+
+        self._nodes = bincode::deserialize_from(reader).unwrap();
+        self._roots = Vec::default();
+
+        for (i, node) in self._nodes.iter() {
+            let k = node.descendant() as i64;
+
+            if m == -1 || k == m {
+                self._roots.push(*i);
+                m = k;
+            } else {
+                break;
+            }
+        }
+
+        self._n_items = m;
+
+        true
     }
 
     fn _get(&self, i: i64) -> &D::Node {
