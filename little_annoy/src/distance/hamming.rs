@@ -68,6 +68,7 @@ const MAX_ITERATIONS: usize = 20;
 impl<T: Item> Distance<T> for Hamming {
     type Node = Node<T>;
 
+    #[inline]
     fn margin(n: &Self::Node, y: &[T]) -> T {
         let n_bits = 4 * 8_u64;
         let chunk = n.v[0].to_u64().unwrap_or_default() / n_bits;
@@ -77,10 +78,12 @@ impl<T: Item> Distance<T> for Hamming {
         T::from_i64(r).unwrap()
     }
 
+    #[inline]
     fn side(n: &Self::Node, y: &[T], _rng: &mut rand_chacha::ChaCha8Rng) -> bool {
         Self::margin(n, y) > T::zero()
     }
 
+    #[inline]
     fn distance(x: &[T], y: &[T], f: usize) -> T {
         let mut dist = T::zero();
 
@@ -94,11 +97,18 @@ impl<T: Item> Distance<T> for Hamming {
         dist
     }
 
+    #[inline]
     fn normalized_distance(distance: f64) -> f64 {
         distance
     }
 
-    fn create_split(nodes: &[Self::Node], n: &mut Self::Node, f: usize, rng: &mut rand_chacha::ChaCha8Rng) {
+    #[inline]
+    fn create_split(
+        nodes: &[Self::Node],
+        n: &mut Self::Node,
+        f: usize,
+        rng: &mut rand_chacha::ChaCha8Rng,
+    ) {
         let mut cur_size = 0;
         let mut i = 0;
 

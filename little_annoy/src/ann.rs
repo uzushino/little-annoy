@@ -7,14 +7,14 @@ use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::usize;
 
-#[cfg(feature="parallel_build")]
-use std::sync::{Arc, Mutex};
 use rand::thread_rng;
 use rand::Rng;
-use rand_chacha::{rand_core::SeedableRng, ChaCha8Rng};
 use rand_chacha::rand_core::RngCore;
+use rand_chacha::{rand_core::SeedableRng, ChaCha8Rng};
+#[cfg(feature = "parallel_build")]
+use std::sync::{Arc, Mutex};
 
-#[cfg(feature="parallel_build")]
+#[cfg(feature = "parallel_build")]
 use rayon::prelude::*;
 
 #[allow(non_snake_case)]
@@ -54,7 +54,7 @@ impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
 
     pub fn add_item(&mut self, item: i64, w: &[T]) {
         let f = self._f;
-        let n = self._nodes.entry(item).or_insert_with(|| D::Node::new(f));
+        let n = self._nodes.entry(item).or_insert(D::Node::new(f));
         n.reset(w);
 
         if item >= self._n_items {
@@ -62,7 +62,10 @@ impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
         }
     }
 
-    pub fn build(&mut self, q: i64) where <D as Distance<T>>::Node: Sync {
+    pub fn build(&mut self, q: i64)
+    where
+        <D as Distance<T>>::Node: Sync,
+    {
         self._n_nodes = self._n_items;
 
         loop {
@@ -105,12 +108,17 @@ impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
         self._get_all_nns(v.to_vec(), n, search_k)
     }
 
-    #[cfg(not(feature="parallel_build"))]
-    fn random_split_index(&self, m: &mut D::Node, indices: &[i64], children: &Vec<D::Node>) -> (Vec<i64>, Vec<i64>) {
+    #[cfg(not(feature = "parallel_build"))]
+    fn random_split_index(
+        &self,
+        m: &mut D::Node,
+        indices: &[i64],
+        children: &Vec<D::Node>,
+    ) -> (Vec<i64>, Vec<i64>) {
         let mut rng = if let Some(seed) = self._seed {
-            rand_chacha::ChaCha8Rng::seed_from_u64(seed)
+            ChaCha8Rng::seed_from_u64(seed)
         } else {
-            rand_chacha::ChaCha8Rng::from_entropy()
+            ChaCha8Rng::from_entropy()
         };
 
         D::create_split(children, m, self._f, &mut rng);
@@ -133,23 +141,28 @@ impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
             children_indices.0.clear();
             children_indices.1.clear();
 
-            indices
-                .iter()
-                .for_each(|j| {
-                    if random_flip(&mut rng) {
-                        children_indices.0.push(*j);
-                    } else {
-                        children_indices.1.push(*j);
-                    }
-                });
+            indices.iter().for_each(|j| {
+                if random_flip(&mut rng) {
+                    children_indices.0.push(*j);
+                } else {
+                    children_indices.1.push(*j);
+                }
+            });
         }
 
         children_indices
     }
 
-
-    #[cfg(feature="parallel_build")]
-    fn random_split_index(&self, m: &mut D::Node, indices: &[i64], children: &Vec<D::Node>) -> (Vec<i64>, Vec<i64>)  where <D as Distance<T>>::Node: Sync {
+    #[cfg(feature = "parallel_build")]
+    fn random_split_index(
+        &self,
+        m: &mut D::Node,
+        indices: &[i64],
+        children: &Vec<D::Node>,
+    ) -> (Vec<i64>, Vec<i64>)
+    where
+        <D as Distance<T>>::Node: Sync,
+    {
         let seed = self._seed.unwrap_or_default();
         let mut rng = ChaCha8Rng::seed_from_u64(seed);
 
@@ -160,26 +173,34 @@ impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
             .clone()
             .par_iter()
             .enumerate()
-            .fold(|| (Vec::default(), Vec::default()), |(mut c1, mut c2), (idx, i)| {
-                let mut rng = ChaCha8Rng::seed_from_u64(seed);
-                rng.set_stream(idx as u64);
+            .fold(
+                || (Vec::default(), Vec::default()),
+                |(mut c1, mut c2), (idx, i)| {
+                    let mut rng = ChaCha8Rng::seed_from_u64(seed);
+                    rng.set_stream(idx as u64);
 
-                if let Some(n) = self._nodes.get(&i) {
-                    let side = D::side(&m, n.vector(), &mut rng);
-                    if side {
-                        c1.push(*i)
-                    } else {
-                        c2.push(*i)
+                    if let Some(n) = self._nodes.get(&i) {
+                        let side = D::side(&m, n.vector(), &mut rng);
+
+                        if side {
+                            c1.push(*i)
+                        } else {
+                            c2.push(*i)
+                        }
                     }
-                }
 
-                (c1, c2)
-            }).reduce(|| (Vec::default(), Vec::default()), |(mut c1, mut c2), (mut d1, mut d2)| {
-                c1.append(&mut d1);
-                c2.append(&mut d2);
+                    (c1, c2)
+                },
+            )
+            .reduce(
+                || (Vec::default(), Vec::default()),
+                |(mut c1, mut c2), (mut d1, mut d2)| {
+                    c1.append(&mut d1);
+                    c2.append(&mut d2);
 
-                (c1, c2)
-            });
+                    (c1, c2)
+                },
+            );
 
         while c1.is_empty() || c2.is_empty() {
             c1.clear();
@@ -188,28 +209,38 @@ impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
             (c1, c2) = indices
                 .par_iter()
                 .enumerate()
-                .fold(|| (c1.clone(), c2.clone()), |(mut c1, mut c2), (idx, i)| {
-                    let mut rng = ChaCha8Rng::seed_from_u64(seed);
-                    rng.set_stream(idx as u64);
+                .fold(
+                    || (c1.clone(), c2.clone()),
+                    |(mut c1, mut c2), (idx, i)| {
+                        let mut rng = ChaCha8Rng::seed_from_u64(seed);
+                        rng.set_stream(idx as u64);
 
-                    if random_flip(&mut rng) {
-                        c1.push(*i);
-                    } else {
-                        c2.push(*i);
-                    }
+                        if random_flip(&mut rng) {
+                            c1.push(*i);
+                        } else {
+                            c2.push(*i);
+                        }
 
-                    (c1, c2)
-                }).reduce(|| (Vec::default(), Vec::default()), |(mut c1, mut c2), (mut d1, mut d2)| {
-                    c1.append(&mut d1);
-                    c2.append(&mut d2);
-                    (c1, c2)
-                });
+                        (c1, c2)
+                    },
+                )
+                .reduce(
+                    || (Vec::default(), Vec::default()),
+                    |(mut c1, mut c2), (mut d1, mut d2)| {
+                        c1.append(&mut d1);
+                        c2.append(&mut d2);
+                        (c1, c2)
+                    },
+                );
         }
 
         (c1, c2)
     }
 
-    fn _make_tree(&mut self, indices: &[i64]) -> i64  where <D as Distance<T>>::Node: Sync {
+    fn _make_tree(&mut self, indices: &[i64]) -> i64
+    where
+        <D as Distance<T>>::Node: Sync,
+    {
         if indices.len() == 1 {
             return indices[0];
         }

@@ -70,27 +70,26 @@ impl NodeImpl<f64> for Node {
 impl Distance<f64> for Euclidean {
     type Node = Node;
 
+    #[inline]
     fn margin(n: &Self::Node, y: &[f64]) -> f64 {
         let mut dot = n.a;
-
         (0..y.len()).for_each(|z| {
             let v = n.v[z as usize] * y[z as usize];
             dot += v.to_f64().unwrap_or_default();
         });
-
         dot
     }
 
+    #[inline]
     fn side(n: &Self::Node, y: &[f64], rng: &mut rand_chacha::ChaCha8Rng) -> bool {
         let dot = Self::margin(n, y);
-
         if dot != 0.0 {
             return dot > 0.0;
         }
-
         random_flip(rng)
     }
 
+    #[inline]
     fn distance(x: &[f64], y: &[f64], f: usize) -> f64 {
         let mut d = 0.0;
 
@@ -102,11 +101,18 @@ impl Distance<f64> for Euclidean {
         d
     }
 
+    #[inline]
     fn normalized_distance(distance: f64) -> f64 {
         distance.max(0.0).sqrt()
     }
 
-    fn create_split(nodes: &[Self::Node], n: &mut Self::Node, f: usize, rng: &mut rand_chacha::ChaCha8Rng) {
+    #[inline]
+    fn create_split(
+        nodes: &[Self::Node],
+        n: &mut Self::Node,
+        f: usize,
+        rng: &mut rand_chacha::ChaCha8Rng,
+    ) {
         let (best_iv, best_jv) = two_means::<f64, Euclidean>(rng, nodes, f);
 
         for z in 0..f {

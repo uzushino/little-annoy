@@ -66,26 +66,25 @@ impl<T: Item> NodeImpl<T> for Node<T> {
 impl<T: Item> Distance<T> for Angular {
     type Node = Node<T>;
 
+    #[inline]
     fn margin(n: &Self::Node, y: &[T]) -> T {
         let mut dot = T::zero();
-
         for (z, item) in y.iter().enumerate().take(n.f) {
             dot += n.v[z] * *item;
         }
-
         dot
     }
 
+    #[inline]
     fn side(n: &Self::Node, y: &[T], rng: &mut rand_chacha::ChaCha8Rng) -> bool {
         let dot = Self::margin(n, y);
-
         if dot != T::zero() {
             return dot > T::zero();
         }
-
         random_flip(rng)
     }
 
+    #[inline]
     fn distance(x: &[T], y: &[T], f: usize) -> T {
         let mut pp = T::zero();
         let mut qq = T::zero();
@@ -112,11 +111,18 @@ impl<T: Item> Distance<T> for Angular {
         make_distance()
     }
 
+    #[inline]
     fn normalized_distance(distance: f64) -> f64 {
         distance.max(0.0).sqrt()
     }
 
-    fn create_split(nodes: &[Self::Node], n: &mut Self::Node, f: usize, rng: &mut rand_chacha::ChaCha8Rng) {
+    #[inline]
+    fn create_split(
+        nodes: &[Self::Node],
+        n: &mut Self::Node,
+        f: usize,
+        rng: &mut rand_chacha::ChaCha8Rng,
+    ) {
         let (best_iv, best_jv) = two_means::<T, Angular>(rng, nodes, f);
 
         for z in 0..f {

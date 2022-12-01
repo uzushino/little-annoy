@@ -13,25 +13,20 @@ pub use manhattan::Manhattan;
 
 use crate::item::Item;
 
-fn get_norm(v: &[f64]) -> f64 {
-    let mut sq_norm = 0.0;
-
+fn get_norm<T: Item>(v: &[T]) -> T {
+    let mut sq_norm = T::zero();
     for z in 0..v.len() {
         sq_norm += v[z as usize] * v[z as usize];
     }
-
     sq_norm.sqrt()
 }
 
-fn normalize<T: num::Num + num::ToPrimitive + num::FromPrimitive + Copy>(v: &[T]) -> Vec<T> {
-    let nv = to_f64_slice(v);
-    let norm = get_norm(&nv);
-
+fn normalize<T: Item>(v: &[T]) -> Vec<T> {
+    let norm = get_norm(v);
     let mut v2 = v.iter().map(|_| T::zero()).collect::<Vec<_>>();
     for z in 0..v.len() {
-        v2[z] = T::from_f64(nv[z] / norm).unwrap();
+        v2[z] = v[z] / norm;
     }
-
     v2
 }
 
@@ -39,11 +34,9 @@ const ITERATION_STEPS: usize = 200;
 
 pub fn to_f64_slice<T: num::ToPrimitive + Copy>(v: &[T]) -> Vec<f64> {
     let mut c: Vec<f64> = v.iter().map(|_| 0.0).collect();
-
     for (z, it) in v.iter().enumerate() {
         c[z] = it.to_f64().unwrap_or_default();
     }
-
     c
 }
 
@@ -110,7 +103,12 @@ pub trait Distance<T: Item> {
 
     fn distance(x: &[T], y: &[T], f: usize) -> T;
 
-    fn create_split(nodes: &[Self::Node], n: &mut Self::Node, f: usize, rng: &mut rand_chacha::ChaCha8Rng);
+    fn create_split(
+        nodes: &[Self::Node],
+        n: &mut Self::Node,
+        f: usize,
+        rng: &mut rand_chacha::ChaCha8Rng,
+    );
 
     fn side(n: &Self::Node, y: &[T], rng: &mut rand_chacha::ChaCha8Rng) -> bool;
 
