@@ -103,7 +103,7 @@ impl<T: Item + serde::Serialize + serde::de::DeserializeOwned> Distance<T> for H
 
     #[inline]
     fn create_split(
-        nodes: &[Self::Node],
+        nodes: &[&Self::Node],
         n: &mut Self::Node,
         f: usize,
         rng: &mut rand_chacha::ChaCha8Rng,

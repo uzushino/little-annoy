@@ -107,7 +107,7 @@ impl Distance<f64> for Euclidean {
 
     #[inline]
     fn create_split(
-        nodes: &[Self::Node],
+        nodes: &[&Self::Node],
         n: &mut Self::Node,
         f: usize,
         rng: &mut rand_chacha::ChaCha8Rng,

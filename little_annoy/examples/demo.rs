@@ -9,7 +9,7 @@ fn main() {
     ann.add_item(2, &[2.0, 2.0]);
     ann.add_item(3, &[4.0, 4.0]);
 
-    for z in 4..1_000 {
+    for z in 4..100_000 {
         ann.add_item(z, &[10.0, 10.0]);
     }
 

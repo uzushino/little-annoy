@@ -29,7 +29,7 @@ fn normalize<T: Item>(v: &[T]) -> Vec<T> {
 
 fn two_means<T: Item, D: Distance<T>>(
     rng: &mut rand_chacha::ChaCha8Rng,
-    nodes: &[D::Node],
+    nodes: &[&D::Node],
     f: usize,
 ) -> (Vec<T>, Vec<T>) {
     let count = nodes.len();
@@ -91,7 +91,7 @@ pub trait Distance<T: Item> {
     fn distance(x: &[T], y: &[T], f: usize) -> T;
 
     fn create_split(
-        nodes: &[Self::Node],
+        nodes: &[&Self::Node],
         n: &mut Self::Node,
         f: usize,
         rng: &mut rand_chacha::ChaCha8Rng,

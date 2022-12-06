@@ -11,11 +11,15 @@ use std::marker::PhantomData;
 use std::usize;
 
 use rand_chacha::ChaCha8Rng;
+
 #[cfg(feature = "parallel_build")]
 use std::sync::{Arc, Mutex};
 
 #[cfg(feature = "parallel_build")]
 use rayon::prelude::*;
+
+#[cfg(feature = "parallel_build")]
+use rayon::iter::Either;
 
 use bincode;
 
@@ -127,7 +131,7 @@ impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
         &self,
         m: &mut D::Node,
         indices: &[i64],
-        children: &Vec<D::Node>,
+        children: &Vec<&D::Node>,
     ) -> (Vec<i64>, Vec<i64>) {
         let mut rng = if let Some(seed) = self._seed {
             ChaCha8Rng::seed_from_u64(seed)
@@ -172,7 +176,7 @@ impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
         &self,
         m: &mut D::Node,
         indices: &[i64],
-        children: &Vec<D::Node>,
+        children: &Vec<&D::Node>,
     ) -> (Vec<i64>, Vec<i64>)
     where
         <D as Distance<T>>::Node: Sync,
@@ -182,70 +186,35 @@ impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
 
         D::create_split(children, m, self._f, &mut rng);
 
-        let (mut c1, mut c2): (Vec<i64>, Vec<i64>) = indices
-            .to_vec()
-            .clone()
-            .par_iter()
+        let indices: Vec<(usize, i64)> = indices
+            .into_iter()
             .enumerate()
-            .fold(
-                || (Vec::default(), Vec::default()),
-                |(mut c1, mut c2), (idx, i)| {
-                    let mut rng = ChaCha8Rng::seed_from_u64(seed);
-                    rng.set_stream(idx as u64);
+            .map(|(i, id)| (i, *id))
+            .collect();
 
-                    if let Some(n) = self._nodes.get(&i) {
-                        let side = D::side(&m, n.vector(), &mut rng);
-
-                        if side {
-                            c1.push(*i)
-                        } else {
-                            c2.push(*i)
-                        }
-                    }
-
-                    (c1, c2)
-                },
-            )
-            .reduce(
-                || (Vec::default(), Vec::default()),
-                |(mut c1, mut c2), (mut d1, mut d2)| {
-                    c1.append(&mut d1);
-                    c2.append(&mut d2);
-
-                    (c1, c2)
-                },
-            );
+        let (mut c1, mut c2): (Vec<i64>, Vec<i64>) = indices
+            .par_iter()
+            .map(|(i, id)| {
+                // let mut rng = rng.lock().unwrap();
+                let mut rng = ChaCha8Rng::seed_from_u64(seed);
+                rng.set_stream(*i as u64);
+                if D::side(&m, self._nodes[id].vector(), &mut rng) { Either::Left(*id) } else { Either::Right(*id) }
+            })
+            .collect();
 
         while c1.is_empty() || c2.is_empty() {
             c1.clear();
             c2.clear();
 
             (c1, c2) = indices
+                .clone()
                 .par_iter()
-                .enumerate()
-                .fold(
-                    || (c1.clone(), c2.clone()),
-                    |(mut c1, mut c2), (idx, i)| {
-                        let mut rng = ChaCha8Rng::seed_from_u64(seed);
-                        rng.set_stream(idx as u64);
-
-                        if random_flip(&mut rng) {
-                            c1.push(*i);
-                        } else {
-                            c2.push(*i);
-                        }
-
-                        (c1, c2)
-                    },
-                )
-                .reduce(
-                    || (Vec::default(), Vec::default()),
-                    |(mut c1, mut c2), (mut d1, mut d2)| {
-                        c1.append(&mut d1);
-                        c2.append(&mut d2);
-                        (c1, c2)
-                    },
-                );
+                .map(|(i, id)| {
+                    let mut rng = ChaCha8Rng::seed_from_u64(seed);
+                    rng.set_stream(*i as u64);
+                    if random_flip(&mut rng) { Either::Left(*id) } else { Either::Right(*id) }
+                })
+                .collect();
         }
 
         (c1, c2)
@@ -260,22 +229,22 @@ impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
         }
 
         let mut m = D::Node::new(self._f);
-
-        if indices.len() <= (self._K as usize) {
+        let c = indices.len();
+        if c <= (self._K as usize) {
             let item = self._n_nodes;
             self._n_nodes += 1;
 
             let m = self._nodes.entry(item).or_insert(D::Node::new(self._f));
-            m.set_descendant(indices.len());
+            m.set_descendant(c);
             m.set_children(indices.to_owned());
 
             return item;
         }
 
-        let mut children: Vec<D::Node> = Vec::default();
+        let mut children: Vec<&D::Node> = Vec::default();
         indices.iter().for_each(|index| {
             if let Some(n) = self._nodes.get(index) {
-                children.push(n.clone());
+                children.push(n);
             }
         });
 
