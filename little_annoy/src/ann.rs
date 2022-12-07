@@ -198,7 +198,11 @@ impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
                 // let mut rng = rng.lock().unwrap();
                 let mut rng = ChaCha8Rng::seed_from_u64(seed);
                 rng.set_stream(*i as u64);
-                if D::side(&m, self._nodes[id].vector(), &mut rng) { Either::Left(*id) } else { Either::Right(*id) }
+                if D::side(&m, self._nodes[id].vector(), &mut rng) {
+                    Either::Left(*id)
+                } else {
+                    Either::Right(*id)
+                }
             })
             .collect();
 
@@ -212,7 +216,11 @@ impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
                 .map(|(i, id)| {
                     let mut rng = ChaCha8Rng::seed_from_u64(seed);
                     rng.set_stream(*i as u64);
-                    if random_flip(&mut rng) { Either::Left(*id) } else { Either::Right(*id) }
+                    if random_flip(&mut rng) {
+                        Either::Left(*id)
+                    } else {
+                        Either::Right(*id)
+                    }
                 })
                 .collect();
         }
