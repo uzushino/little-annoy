@@ -13,9 +13,6 @@ use std::usize;
 use rand_chacha::ChaCha8Rng;
 
 #[cfg(feature = "parallel_build")]
-use std::sync::{Arc, Mutex};
-
-#[cfg(feature = "parallel_build")]
 use rayon::prelude::*;
 
 #[cfg(feature = "parallel_build")]
@@ -113,7 +110,7 @@ impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
     where
         D: Distance<T>,
     {
-        self._get_all_nns(v.to_vec(), n, search_k)
+        self._get_all_nns(v, n, search_k)
     }
 
     pub fn get_nns_by_item(&self, item: i64, n: usize, search_k: i64) -> (Vec<i64>, Vec<f64>)
@@ -123,7 +120,7 @@ impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
         let m = self._nodes.get(&item).unwrap();
         let v = m.vector();
 
-        self._get_all_nns(v.to_vec(), n, search_k)
+        self._get_all_nns(v, n, search_k)
     }
 
     #[cfg(not(feature = "parallel_build"))]
@@ -290,13 +287,12 @@ impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
         item
     }
 
-    fn _get_all_nns(&self, v: Vec<T>, n: usize, mut search_k: i64) -> (Vec<i64>, Vec<f64>)
+    fn _get_all_nns(&self, v: &[T], n: usize, mut search_k: i64) -> (Vec<i64>, Vec<f64>)
     where
         D: Distance<T>,
     {
         let mut nodes = self._nodes.clone();
         let mut q: BinaryHeap<(Numeric<T>, i64)> = BinaryHeap::new();
-        let v = v.as_slice();
         let f = self._f;
 
         if search_k == -1 {
