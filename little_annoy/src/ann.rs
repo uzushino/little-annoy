@@ -1,6 +1,6 @@
 use crate::distance::{Distance, NodeImpl};
 use crate::item::Item;
-use crate::{Numeric};
+use crate::Numeric;
 
 use rand::prelude::SeedableRng;
 use std::cmp::Reverse;
@@ -179,21 +179,18 @@ impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
         let mut rng = thread_rng();
         D::create_split(children, m, self._f, &mut rng);
 
-        let indices: Vec<(usize, i64)> = indices
-            .into_iter()
-            .enumerate()
-            .map(|(i, id)| (i, *id))
-            .collect();
-
         let (mut c1, mut c2): (Vec<i64>, Vec<i64>) = indices
             .par_iter()
-            .map_init(|| rand::thread_rng(), |mut rng, (i, id)| {
-                if D::side(&m, self._nodes[id].vector(), &mut rng) {
-                    Either::Left(*id)
-                } else {
-                    Either::Right(*id)
-                }
-            })
+            .map_init(
+                || rand::thread_rng(),
+                |mut rng, id| {
+                    if D::side(&m, self._nodes[id].vector(), &mut rng) {
+                        Either::Left(*id)
+                    } else {
+                        Either::Right(*id)
+                    }
+                },
+            )
             .collect();
 
         while c1.is_empty() || c2.is_empty() {
@@ -201,15 +198,17 @@ impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
             c2.clear();
 
             (c1, c2) = indices
-                .clone()
                 .par_iter()
-                .map_init(|| rand::thread_rng(), |mut rng, (i, id)| {
-                    if rng.gen::<bool>() {
-                        Either::Left(*id)
-                    } else {
-                        Either::Right(*id)
-                    }
-                })
+                .map_init(
+                    || rand::thread_rng(),
+                    |mut rng, id| {
+                        if rng.gen::<bool>() {
+                            Either::Left(*id)
+                        } else {
+                            Either::Right(*id)
+                        }
+                    },
+                )
                 .collect();
         }
 

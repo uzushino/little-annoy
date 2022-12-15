@@ -1,8 +1,8 @@
-use num::ToPrimitive;
-use serde::{Deserialize, Serialize};
-use rand::Rng;
-use rand::rngs::ThreadRng;
 use crate::distance::{normalize, two_means, Distance, NodeImpl};
+use num::ToPrimitive;
+use rand::rngs::ThreadRng;
+use rand::Rng;
+use serde::{Deserialize, Serialize};
 
 pub struct Euclidean {}
 
@@ -106,12 +106,7 @@ impl Distance<f64> for Euclidean {
     }
 
     #[inline]
-    fn create_split(
-        nodes: &[&Self::Node],
-        n: &mut Self::Node,
-        f: usize,
-        rng: &mut ThreadRng,
-    ) {
+    fn create_split(nodes: &[&Self::Node], n: &mut Self::Node, f: usize, rng: &mut ThreadRng) {
         let (best_iv, best_jv) = two_means::<f64, Euclidean>(rng, nodes, f);
 
         for z in 0..f {

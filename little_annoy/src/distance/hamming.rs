@@ -1,6 +1,6 @@
+use rand::rngs::ThreadRng;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
-use rand::rngs::ThreadRng;
 
 use crate::distance::{Distance, NodeImpl};
 use crate::item::Item;
@@ -103,12 +103,7 @@ impl<T: Item + serde::Serialize + serde::de::DeserializeOwned> Distance<T> for H
     }
 
     #[inline]
-    fn create_split(
-        nodes: &[&Self::Node],
-        n: &mut Self::Node,
-        f: usize,
-        rng: &mut ThreadRng,
-    ) {
+    fn create_split(nodes: &[&Self::Node], n: &mut Self::Node, f: usize, rng: &mut ThreadRng) {
         let mut cur_size = 0;
         let mut i = 0;
 

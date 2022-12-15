@@ -1,5 +1,5 @@
-use rand::Rng;
 use rand::rngs::ThreadRng;
+use rand::Rng;
 
 pub mod angular;
 pub mod euclidean;
@@ -91,12 +91,7 @@ pub trait Distance<T: Item> {
 
     fn distance(x: &[T], y: &[T], f: usize) -> T;
 
-    fn create_split(
-        nodes: &[&Self::Node],
-        n: &mut Self::Node,
-        f: usize,
-        rng: &mut ThreadRng,
-    );
+    fn create_split(nodes: &[&Self::Node], n: &mut Self::Node, f: usize, rng: &mut ThreadRng);
 
     fn side(n: &Self::Node, y: &[T], rng: &mut ThreadRng) -> bool;
 

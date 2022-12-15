@@ -2,8 +2,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::distance::{normalize, two_means, Distance, NodeImpl};
 use crate::item::Item;
-use rand::Rng;
 use rand::rngs::ThreadRng;
+use rand::Rng;
 pub struct Angular {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -116,12 +116,7 @@ impl<T: Item + serde::Serialize + serde::de::DeserializeOwned> Distance<T> for A
     }
 
     #[inline]
-    fn create_split(
-        nodes: &[&Self::Node],
-        n: &mut Self::Node,
-        f: usize,
-        rng: &mut ThreadRng,
-    ) {
+    fn create_split(nodes: &[&Self::Node], n: &mut Self::Node, f: usize, rng: &mut ThreadRng) {
         let (best_iv, best_jv) = two_means::<T, Angular>(rng, nodes, f);
 
         for z in 0..f {

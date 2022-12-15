@@ -1,8 +1,8 @@
 use std::thread::Thread;
 
-use serde::{Deserialize, Serialize};
-use rand::Rng;
 use rand::rngs::ThreadRng;
+use rand::Rng;
+use serde::{Deserialize, Serialize};
 
 use crate::distance::{normalize, two_means, Distance, NodeImpl};
 pub struct Manhattan {}
@@ -106,12 +106,7 @@ impl Distance<f64> for Manhattan {
     }
 
     #[inline]
-    fn create_split(
-        nodes: &[&Self::Node],
-        n: &mut Self::Node,
-        f: usize,
-        rng: &mut ThreadRng,
-    ) {
+    fn create_split(nodes: &[&Self::Node], n: &mut Self::Node, f: usize, rng: &mut ThreadRng) {
         let (best_iv, best_jv) = two_means::<f64, Manhattan>(rng, nodes, f);
 
         for z in 0..f {
