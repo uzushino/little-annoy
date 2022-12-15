@@ -1,5 +1,6 @@
 use rand::Rng;
 use serde::{Deserialize, Serialize};
+use rand::rngs::ThreadRng;
 
 use crate::distance::{Distance, NodeImpl};
 use crate::item::Item;
@@ -78,7 +79,7 @@ impl<T: Item + serde::Serialize + serde::de::DeserializeOwned> Distance<T> for H
     }
 
     #[inline]
-    fn side(n: &Self::Node, y: &[T], _rng: &mut rand_chacha::ChaCha8Rng) -> bool {
+    fn side(n: &Self::Node, y: &[T], _rng: &mut ThreadRng) -> bool {
         Self::margin(n, y) > T::zero()
     }
 
@@ -106,7 +107,7 @@ impl<T: Item + serde::Serialize + serde::de::DeserializeOwned> Distance<T> for H
         nodes: &[&Self::Node],
         n: &mut Self::Node,
         f: usize,
-        rng: &mut rand_chacha::ChaCha8Rng,
+        rng: &mut ThreadRng,
     ) {
         let mut cur_size = 0;
         let mut i = 0;

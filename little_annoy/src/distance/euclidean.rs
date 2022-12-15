@@ -1,8 +1,8 @@
 use num::ToPrimitive;
 use serde::{Deserialize, Serialize};
-
+use rand::Rng;
+use rand::rngs::ThreadRng;
 use crate::distance::{normalize, two_means, Distance, NodeImpl};
-use crate::random_flip;
 
 pub struct Euclidean {}
 
@@ -80,12 +80,12 @@ impl Distance<f64> for Euclidean {
     }
 
     #[inline]
-    fn side(n: &Self::Node, y: &[f64], rng: &mut rand_chacha::ChaCha8Rng) -> bool {
+    fn side(n: &Self::Node, y: &[f64], rng: &mut ThreadRng) -> bool {
         let dot = Self::margin(n, y);
         if dot != 0.0 {
             return dot > 0.0;
         }
-        random_flip(rng)
+        rng.gen()
     }
 
     #[inline]
@@ -110,7 +110,7 @@ impl Distance<f64> for Euclidean {
         nodes: &[&Self::Node],
         n: &mut Self::Node,
         f: usize,
-        rng: &mut rand_chacha::ChaCha8Rng,
+        rng: &mut ThreadRng,
     ) {
         let (best_iv, best_jv) = two_means::<f64, Euclidean>(rng, nodes, f);
 
@@ -131,6 +131,8 @@ impl Distance<f64> for Euclidean {
 
 #[cfg(test)]
 mod tests {
+    use rand::thread_rng;
+
     use super::*;
 
     #[test]
@@ -148,7 +150,7 @@ mod tests {
     fn test_side() {
         let mut n = Node::new(2);
         n.v = vec![2., 4.];
-        let actual = Euclidean::side(&n, &[1., 2.], &mut rand::SeedableRng::from_entropy());
+        let actual = Euclidean::side(&n, &[1., 2.], &mut thread_rng());
 
         assert!(actual)
     }

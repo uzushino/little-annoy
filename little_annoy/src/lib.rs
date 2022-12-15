@@ -28,7 +28,3 @@ impl<T: item::Item> Ord for Numeric<T> {
         self.0.partial_cmp(&other.0).unwrap_or(Ordering::Equal)
     }
 }
-
-fn random_flip(rng: &mut rand_chacha::ChaCha8Rng) -> bool {
-    rng.gen::<bool>()
-}

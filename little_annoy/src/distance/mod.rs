@@ -1,4 +1,5 @@
 use rand::Rng;
+use rand::rngs::ThreadRng;
 
 pub mod angular;
 pub mod euclidean;
@@ -28,7 +29,7 @@ fn normalize<T: Item>(v: &[T]) -> Vec<T> {
 }
 
 fn two_means<T: Item, D: Distance<T>>(
-    rng: &mut rand_chacha::ChaCha8Rng,
+    rng: &mut ThreadRng,
     nodes: &[&D::Node],
     f: usize,
 ) -> (Vec<T>, Vec<T>) {
@@ -94,10 +95,10 @@ pub trait Distance<T: Item> {
         nodes: &[&Self::Node],
         n: &mut Self::Node,
         f: usize,
-        rng: &mut rand_chacha::ChaCha8Rng,
+        rng: &mut ThreadRng,
     );
 
-    fn side(n: &Self::Node, y: &[T], rng: &mut rand_chacha::ChaCha8Rng) -> bool;
+    fn side(n: &Self::Node, y: &[T], rng: &mut ThreadRng) -> bool;
 
     fn margin(n: &Self::Node, y: &[T]) -> T;
 

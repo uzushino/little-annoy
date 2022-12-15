@@ -2,8 +2,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::distance::{normalize, two_means, Distance, NodeImpl};
 use crate::item::Item;
-use crate::random_flip;
-
+use rand::Rng;
+use rand::rngs::ThreadRng;
 pub struct Angular {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -75,12 +75,12 @@ impl<T: Item + serde::Serialize + serde::de::DeserializeOwned> Distance<T> for A
     }
 
     #[inline]
-    fn side(n: &Self::Node, y: &[T], rng: &mut rand_chacha::ChaCha8Rng) -> bool {
+    fn side(n: &Self::Node, y: &[T], rng: &mut ThreadRng) -> bool {
         let dot = Self::margin(n, y);
         if dot != T::zero() {
             return dot > T::zero();
         }
-        random_flip(rng)
+        rng.gen::<bool>()
     }
 
     #[inline]
@@ -120,7 +120,7 @@ impl<T: Item + serde::Serialize + serde::de::DeserializeOwned> Distance<T> for A
         nodes: &[&Self::Node],
         n: &mut Self::Node,
         f: usize,
-        rng: &mut rand_chacha::ChaCha8Rng,
+        rng: &mut ThreadRng,
     ) {
         let (best_iv, best_jv) = two_means::<T, Angular>(rng, nodes, f);
 

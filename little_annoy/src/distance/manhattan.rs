@@ -1,7 +1,10 @@
+use std::thread::Thread;
+
 use serde::{Deserialize, Serialize};
+use rand::Rng;
+use rand::rngs::ThreadRng;
 
 use crate::distance::{normalize, two_means, Distance, NodeImpl};
-use crate::random_flip;
 pub struct Manhattan {}
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -76,14 +79,14 @@ impl Distance<f64> for Manhattan {
     }
 
     #[inline]
-    fn side(n: &Self::Node, y: &[f64], rng: &mut rand_chacha::ChaCha8Rng) -> bool {
+    fn side(n: &Self::Node, y: &[f64], rng: &mut ThreadRng) -> bool {
         let dot = Self::margin(n, y);
 
         if dot != 0.0 {
             return dot > 0.0;
         }
 
-        random_flip(rng)
+        rng.gen()
     }
 
     #[inline]
@@ -107,7 +110,7 @@ impl Distance<f64> for Manhattan {
         nodes: &[&Self::Node],
         n: &mut Self::Node,
         f: usize,
-        rng: &mut rand_chacha::ChaCha8Rng,
+        rng: &mut ThreadRng,
     ) {
         let (best_iv, best_jv) = two_means::<f64, Manhattan>(rng, nodes, f);
 

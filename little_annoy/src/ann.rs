@@ -1,6 +1,6 @@
 use crate::distance::{Distance, NodeImpl};
 use crate::item::Item;
-use crate::{random_flip, Numeric};
+use crate::{Numeric};
 
 use rand::prelude::SeedableRng;
 use std::cmp::Reverse;
@@ -10,6 +10,9 @@ use std::io::BufWriter;
 use std::marker::PhantomData;
 use std::usize;
 
+use rand::rngs::ThreadRng;
+use rand::thread_rng;
+use rand::Rng;
 use rand_chacha::ChaCha8Rng;
 
 #[cfg(feature = "parallel_build")]
@@ -130,12 +133,7 @@ impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
         indices: &[i64],
         children: &Vec<&D::Node>,
     ) -> (Vec<i64>, Vec<i64>) {
-        let mut rng = if let Some(seed) = self._seed {
-            ChaCha8Rng::seed_from_u64(seed)
-        } else {
-            ChaCha8Rng::from_entropy()
-        };
-
+        let mut rng = thread_rng();
         D::create_split(children, m, self._f, &mut rng);
 
         let mut children_indices = (Vec::new(), Vec::new());
@@ -157,7 +155,7 @@ impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
             children_indices.1.clear();
 
             indices.iter().for_each(|j| {
-                if random_flip(&mut rng) {
+                if rng.gen::<bool>() {
                     children_indices.0.push(*j);
                 } else {
                     children_indices.1.push(*j);
@@ -178,9 +176,7 @@ impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
     where
         <D as Distance<T>>::Node: Sync,
     {
-        let seed = self._seed.unwrap_or_default();
-        let mut rng = ChaCha8Rng::seed_from_u64(seed);
-
+        let mut rng = thread_rng();
         D::create_split(children, m, self._f, &mut rng);
 
         let indices: Vec<(usize, i64)> = indices
@@ -191,10 +187,7 @@ impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
 
         let (mut c1, mut c2): (Vec<i64>, Vec<i64>) = indices
             .par_iter()
-            .map(|(i, id)| {
-                // let mut rng = rng.lock().unwrap();
-                let mut rng = ChaCha8Rng::seed_from_u64(seed);
-                rng.set_stream(*i as u64);
+            .map_init(|| rand::thread_rng(), |mut rng, (i, id)| {
                 if D::side(&m, self._nodes[id].vector(), &mut rng) {
                     Either::Left(*id)
                 } else {
@@ -210,10 +203,8 @@ impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
             (c1, c2) = indices
                 .clone()
                 .par_iter()
-                .map(|(i, id)| {
-                    let mut rng = ChaCha8Rng::seed_from_u64(seed);
-                    rng.set_stream(*i as u64);
-                    if random_flip(&mut rng) {
+                .map_init(|| rand::thread_rng(), |mut rng, (i, id)| {
+                    if rng.gen::<bool>() {
                         Either::Left(*id)
                     } else {
                         Either::Right(*id)
@@ -400,7 +391,6 @@ impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
 
     pub fn get_distance(self, i: i64, j: i64) -> f64 {
         let dist = D::distance(self._get(i).vector(), self._get(j).vector(), self._f);
-
         D::normalized_distance(dist.to_f64().unwrap_or(0.))
     }
 }
