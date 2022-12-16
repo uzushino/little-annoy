@@ -2,7 +2,6 @@ use crate::distance::{Distance, NodeImpl};
 use crate::item::Item;
 use crate::Numeric;
 
-use rand::prelude::SeedableRng;
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 use std::collections::HashMap;
@@ -10,10 +9,8 @@ use std::io::BufWriter;
 use std::marker::PhantomData;
 use std::usize;
 
-use rand::rngs::ThreadRng;
 use rand::thread_rng;
 use rand::Rng;
-use rand_chacha::ChaCha8Rng;
 
 #[cfg(feature = "parallel_build")]
 use rayon::prelude::*;
