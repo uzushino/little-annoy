@@ -32,6 +32,7 @@ impl NodeImpl<f64> for Node {
         self.n_descendants = 1;
         self.a = 0.;
         self.v = v.to_vec();
+        self.f = 0;
     }
 
     fn descendant(&self) -> usize {
@@ -63,6 +64,7 @@ impl NodeImpl<f64> for Node {
         self.children = other.children;
         self.v = other.v;
         self.a = other.a;
+        self.f = other.f;
     }
 }
 

@@ -198,7 +198,7 @@ impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
                 .par_iter()
                 .map_init(
                     || rand::thread_rng(),
-                    |mut rng, id| {
+                    |rng, id| {
                         if rng.gen::<bool>() {
                             Either::Left(*id)
                         } else {

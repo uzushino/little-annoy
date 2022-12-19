@@ -40,7 +40,7 @@ impl<T: Item> NodeImpl<T> for Node<T> {
     }
 
     fn vector(&self) -> &[T] {
-        self.v.as_slice()
+        &self.v
     }
 
     fn mut_vector(&mut self) -> &mut Vec<T> {
