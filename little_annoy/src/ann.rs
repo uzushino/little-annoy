@@ -254,7 +254,7 @@ impl<T: Item, D: Distance<T>> Annoy<T, D> {
 
         let nns_dist = nns_dist.into_sorted_vec();
         let m = nns_dist.len();
-        let p = if n < m { n } else { m } as usize;
+        let p = if n < m { n } else { m };
 
         let mut distances = Vec::new();
         let mut result = Vec::new();
