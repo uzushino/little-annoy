@@ -320,7 +320,7 @@ impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
 
         nns.sort_unstable();
 
-        let mut nns_dist: BinaryHeap<Reverse<AnnResult<T>>> = BinaryHeap::new();
+        let mut nns_dist: BinaryHeap<AnnResult<T>> = BinaryHeap::new();
         let mut last = -1;
 
         for j in &nns {
@@ -331,16 +331,17 @@ impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
             last = *j;
             let mut _n = nodes.entry(*j).or_insert_with(|| D::Node::new(f));
             let dist = D::distance(v, _n.vector(), self._f);
-            nns_dist.push(Reverse(AnnResult(dist, *j)));
+            nns_dist.push(AnnResult(dist, *j));
         }
 
+        let nns_dist = nns_dist.into_sorted_vec();
         let m = nns_dist.len();
-        let p = if n < m { n } else { m } as usize;
+        let p = if n < m { n } else { m };
 
         let mut distances = Vec::new();
         let mut result = Vec::new();
 
-        for Reverse(AnnResult(dist, idx)) in nns_dist.iter().take(p) {
+        for AnnResult(dist, idx) in nns_dist.iter().take(p) {
             distances.push(D::normalized_distance(T::to_f64(dist).unwrap()));
             result.push(*idx)
         }
