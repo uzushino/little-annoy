@@ -291,7 +291,6 @@ impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
         }
 
         let mut nns: Vec<i64> = Vec::new();
-
         while nns.len() < (search_k as usize) && !q.is_empty() {
             let top = q.peek().unwrap();
             let d: T = top.0 .0;

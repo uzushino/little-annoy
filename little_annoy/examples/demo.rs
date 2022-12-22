@@ -10,7 +10,7 @@ fn main() {
     ann.add_item(3, &[4.0, 4.0]);
 
     for z in 4..5_000 {
-        ann.add_item(z, &[10.0, 10.0]);
+        ann.add_item(z, &[10.0 + z as f64, 10.0 + z as f64]);
     }
 
     println!("Building index ...");
