@@ -7,6 +7,8 @@ use std::collections::HashMap;
 use std::io::BufWriter;
 use std::marker::PhantomData;
 use std::usize;
+use std::sync::Mutex;
+use tokio::task;
 
 use rand::thread_rng;
 use rand::Rng;
@@ -30,6 +32,32 @@ impl<T: PartialOrd> Ord for AnnResult<T> {
         self.0.partial_cmp(&other.0).unwrap()
     }
 }
+
+pub struct AnnoyThreadBuilder {
+    pub n_nodes_mutex: Mutex<()>,
+}
+
+impl AnnoyThreadBuilder {
+    pub async fn build<T, D>(mut annoy: Annoy<T, D>, n_thread: usize) where T: Item + std::marker::Sync, D: Distance<T> {
+        let mut threads = vec![];
+        let mut thread_builder = AnnoyThreadBuilder{
+            n_nodes_mutex: Mutex::new(())
+        };
+
+        for i in 0..n_thread {
+            let join = task::spawn(async {
+
+            });
+
+            threads.push(join);
+        }
+
+        for handle in threads {
+            handle.await;
+        }
+    }
+}
+
 
 #[allow(non_snake_case)]
 pub struct Annoy<T: Item, D>
