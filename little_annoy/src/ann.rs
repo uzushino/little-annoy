@@ -2,7 +2,6 @@ use crate::distance::{Distance, NodeImpl};
 use crate::item::Item;
 use crate::Numeric;
 
-use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 use std::collections::HashMap;
 use std::io::BufWriter;
@@ -194,19 +193,13 @@ impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
             c1.clear();
             c2.clear();
 
-            (c1, c2) = indices
-                .par_iter()
-                .map_init(
-                    || rand::thread_rng(),
-                    |rng, id| {
-                        if rng.gen::<bool>() {
-                            Either::Left(*id)
-                        } else {
-                            Either::Right(*id)
-                        }
-                    },
-                )
-                .collect();
+            indices.iter().for_each(|j| {
+                if rng.gen::<bool>() {
+                    c1.push(*j);
+                } else {
+                    c2.push(*j);
+                }
+            });
         }
 
         (c1, c2)
