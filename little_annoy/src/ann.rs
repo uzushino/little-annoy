@@ -6,9 +6,11 @@ use std::collections::BinaryHeap;
 use std::collections::HashMap;
 use std::io::BufWriter;
 use std::marker::PhantomData;
+use std::os::unix::thread;
 use std::usize;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex, MutexGuard};
 use tokio::task;
+use lockable::*;
 
 use rand::thread_rng;
 use rand::Rng;
@@ -33,28 +35,89 @@ impl<T: PartialOrd> Ord for AnnResult<T> {
     }
 }
 
+
 pub struct AnnoyThreadBuilder {
-    pub n_nodes_mutex: Mutex<()>,
 }
 
 impl AnnoyThreadBuilder {
-    pub async fn build<T, D>(mut annoy: Annoy<T, D>, n_thread: usize) where T: Item + std::marker::Sync, D: Distance<T> {
-        let mut threads = vec![];
-        let mut thread_builder = AnnoyThreadBuilder{
-            n_nodes_mutex: Mutex::new(())
-        };
+    pub fn build<T, D>(annoy: Arc<Mutex<&mut Annoy<T, D>>>, n_thread: usize, q: i64) 
+        where T: Item + Sync + Send, D: Distance<T>, D::Node: Send + Sync {
+        let n_nodes_mutex = Arc::new(Mutex::new(()));
+        let shared_nodes_mutex = Arc::new(Mutex::new(()));
+        let builder_mutex = Arc::new(Mutex::new(()));
 
-        for i in 0..n_thread {
-            let join = task::spawn(async {
+        use std::thread;
 
-            });
+        thread::scope(|s| {
+            for thread_idx in 0..n_thread {
+                let trees_per_thread = if q == -1 { -1 } else { (q + thread_idx as i64) / n_thread as i64};
 
-            threads.push(join);
-        }
+                let mu1 = n_nodes_mutex.clone();
+                let mu2 = shared_nodes_mutex.clone();
+                let mu3 = builder_mutex.clone();
 
-        for handle in threads {
-            handle.await;
-        }
+                let ann = annoy.clone();
+
+                s.spawn(move || {
+                    let mut thread_roots = Vec::new();
+
+                    loop {
+                        {
+                            let ann = ann.lock().unwrap();
+                            let _nodes = &ann._nodes;
+                            let _roots = &ann._roots;
+
+                            println!("thread_roots: {}, nodes: {}, roots: {}, thread: {}. tree_per_thread: {}", 
+                                thread_roots.len(), _nodes.len(), _roots.len(), thread_idx, trees_per_thread);
+                        }
+                        if q == -1 {
+                            {
+                                let ann = ann.lock().unwrap();
+                                let _n_nodes = ann._n_nodes;
+                                let _n_items = ann._n_items;
+
+                                mu1.lock().unwrap();
+                                if _n_nodes >= _n_items * 2 {
+                                    break;
+                                }
+                            }
+                        } else {
+                            if thread_roots.len() >= (trees_per_thread as usize) {
+                                break;
+                            }
+                        }
+
+                        let mut indices: Vec<i64> = Vec::new();
+                        {
+                            mu2.lock().unwrap();
+                            let ann = ann.lock().unwrap();
+                            let _nodes = &ann._nodes;
+                            let _n_items = ann._n_items;
+
+                            for i in 0.._n_items {
+                                if let Some(n) = _nodes.get(&i) {
+                                    if n.descendant() >= 1 {
+                                        indices.push(i)
+                                    }
+                                }
+                            }
+                        }
+
+                        {
+                            let mut ann = ann.lock().unwrap();
+                            let ind = ann._make_tree(&indices);
+                            thread_roots.push(ind);
+                        }
+                    }
+
+                    {
+                        mu3.lock().unwrap();
+                        let mut ann = ann.lock().unwrap();
+                        ann._roots.append(&mut thread_roots);
+                    }
+                });
+            }
+        });
     }
 }
 
@@ -76,7 +139,7 @@ where
     pub t: PhantomData<T>,
 }
 
-impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
+impl<T: Item + Sync + Send, D: Distance<T>> Annoy<T, D> {
     pub fn new(f: usize) -> Self {
         Self {
             _roots: Vec::new(),
@@ -106,31 +169,11 @@ impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
 
     pub fn build(&mut self, q: i64)
     where
-        <D as Distance<T>>::Node: Sync,
+        <D as Distance<T>>::Node: Sync + Send,
     {
         self._n_nodes = self._n_items;
 
-        loop {
-            if q == -1 && self._n_nodes >= self._n_items * 2 {
-                break;
-            }
-            if q != -1 && self._roots.len() >= (q as usize) {
-                break;
-            }
-
-            let mut indices: Vec<i64> = Vec::new();
-            for i in 0..self._n_items {
-                if let Some(n) = self._nodes.get(&i) {
-                    if n.descendant() >= 1 {
-                        indices.push(i)
-                    }
-                }
-            }
-
-            let ind = self._make_tree(&indices);
-
-            self._roots.push(ind);
-        }
+        AnnoyThreadBuilder::build(Arc::new(Mutex::new(self)), 5, q);
     }
 
     pub fn get_nns_by_vector(&self, v: &[T], n: usize, search_k: i64) -> (Vec<i64>, Vec<f64>)
@@ -243,6 +286,7 @@ impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
 
         let mut m = D::Node::new(self._f);
         let c = indices.len();
+        
         if c <= (self._K as usize) {
             let item = self._n_nodes;
             self._n_nodes += 1;
@@ -369,6 +413,7 @@ impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
         (result, distances)
     }
 
+    /*
     pub fn save<W>(&self, w: W)
     where
         W: std::io::Write,
@@ -400,7 +445,7 @@ impl<T: Item + std::marker::Sync, D: Distance<T>> Annoy<T, D> {
         self._n_items = m;
 
         true
-    }
+    } */
 
     fn _get(&self, i: i64) -> &D::Node {
         &self._nodes[&i]
