@@ -12,6 +12,12 @@ use std::thread;
 
 use rand::thread_rng;
 use rand::Rng;
+use async_std::{
+    io::BufReader,
+    net::{TcpListener, TcpStream, ToSocketAddrs},
+    prelude::*,
+    task,
+};
 
 #[cfg(feature = "parallel_build")]
 use rayon::prelude::*;
@@ -40,7 +46,7 @@ pub struct AnnoyThreadBuilder {
 
 impl AnnoyThreadBuilder {
     pub fn build<T, D>(annoy: Arc<Mutex<&mut Annoy<T, D>>>, n_thread: usize, q: i64)
-        where T: Item + Sync + Send, D: Distance<T>, D::Node: Send + Sync {
+        where T: Item + Sync + Send, D: Distance<T>, D::Node: Send + Sync + 'static {
         let (_nodes, _f, _K, _n_items, _n_nodes, _roots) = {
             let ann = annoy.lock().unwrap();
 
@@ -56,62 +62,69 @@ impl AnnoyThreadBuilder {
         let _n_nodes_ = Arc::new(Mutex::new(_n_nodes));
         let _nodes_ = Arc::new(Mutex::new(_nodes));
         let _roots_ = Arc::new(Mutex::new(_roots));
+        let mut threads = vec![];
 
-        std::thread::scope(|s| {
-            for thread_idx in 0..n_thread {
-                let trees_per_thread = if q == -1 { -1 } else { (q + thread_idx as i64) / n_thread as i64 };
+        for thread_idx in 0..n_thread {
+            let trees_per_thread = if q == -1 { -1 } else { (q + thread_idx as i64) / n_thread as i64 };
 
-                let _n_nodes_ = _n_nodes_.clone();
-                let _nodes_ = _nodes_.clone();
-                let _roots_ = _roots_.clone();
+            let _n_nodes_ = _n_nodes_.clone();
+            let _nodes_ = _nodes_.clone();
+            let _roots_ = _roots_.clone();
 
-                s.spawn(move || {
-                    let mut thread_roots = Vec::new();
-                    loop {
-                        if q == -1 {
-                            {
-                                _n_nodes_.lock().unwrap();
-                                if _n_nodes >= _n_items * 2 {
-                                    break;
-                                }
-                            }
-                        } else {
-                            if thread_roots.len() >= (trees_per_thread as usize) {
+            let handle = task::spawn(async move {
+                let mut thread_roots = Vec::new();
+                loop {
+                    if q == -1 {
+                        {
+                            _n_nodes_.lock().unwrap();
+                            if _n_nodes >= _n_items * 2 {
                                 break;
                             }
                         }
+                    } else {
+                        if thread_roots.len() >= (trees_per_thread as usize) {
+                            break;
+                        }
+                    }
 
-                        let mut indices: Vec<i64> = Vec::new();
-                        {
-                            let _nodes = _nodes_.lock().unwrap();
-                            for i in 0.._n_items {
-                                if let Some(n) = _nodes.get(&i) {
-                                    if n.descendant() >= 1 {
-                                        indices.push(i)
-                                    }
+                    let mut indices: Vec<i64> = Vec::new();
+                    {
+                        let _nodes = _nodes_.lock().unwrap();
+                        for i in 0.._n_items {
+                            if let Some(n) = _nodes.get(&i) {
+                                if n.descendant() >= 1 {
+                                    indices.push(i)
                                 }
                             }
                         }
-
-                        let ind = _make_tree::<D, T>(
-                            &_nodes_,
-                            _f,
-                            _K,
-                            _n_items,
-                            &_n_nodes_,
-                            true,
-                            &indices
-                        );
-
-                        thread_roots.push(ind);
                     }
 
-                    {
-                        let mut _roots = _roots_.lock().unwrap();
-                        _roots.append(&mut thread_roots);
-                    }
-                });
-            };
+                    let ind = _make_tree::<D, T>(
+                        &_nodes_,
+                        _f,
+                        _K,
+                        _n_items,
+                        &_n_nodes_,
+                        true,
+                        &indices
+                    );
+
+                    thread_roots.push(ind);
+                }
+
+                {
+                    let mut _roots = _roots_.lock().unwrap();
+                    _roots.append(&mut thread_roots);
+                }
+            });
+
+            threads.push(handle);
+        };
+
+        task::block_on(async {
+            for f in threads {
+                f.await
+            }
         });
 
         annoy.lock().unwrap()._roots = _roots_.lock().unwrap().clone();
@@ -167,11 +180,10 @@ impl<T: Item + Sync + Send, D: Distance<T>> Annoy<T, D> {
 
     pub fn build(&mut self, q: i64)
     where
-        <D as Distance<T>>::Node: Sync + Send,
+        <D as Distance<T>>::Node: Sync + Send + 'static,
     {
         self._n_nodes = self._n_items;
-
-        AnnoyThreadBuilder::build(Arc::new(Mutex::new(self)), 5, q);
+        AnnoyThreadBuilder::build(Arc::new(Mutex::new(self)), 10, q);
     }
 
     pub fn get_nns_by_vector(&self, v: &[T], n: usize, search_k: i64) -> (Vec<i64>, Vec<f64>)
