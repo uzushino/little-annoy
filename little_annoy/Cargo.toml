@@ -14,7 +14,8 @@ num = "0.4"
 num-traits = "0.2.15"
 rayon = { version = "*", optional = true }
 rand_chacha = "*"
-tokio = { version = "*", features = ["rt"] }
+# tokio = { version = "*", features = ["rt"] }
+async-std = "*"
 lockable = "0.0.6"
 
 

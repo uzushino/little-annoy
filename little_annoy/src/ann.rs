@@ -8,8 +8,8 @@ use std::io::BufWriter;
 use std::marker::PhantomData;
 use std::usize;
 use std::sync::{Arc, Mutex, MutexGuard};
-use tokio::task;
 use std::thread;
+use async_std::task;
 use lockable::*;
 
 use rand::thread_rng;
@@ -47,77 +47,75 @@ impl AnnoyThreadBuilder {
         let shared_nodes_mutex = Arc::new(Mutex::new(()));
         let builder_mutex = Arc::new(Mutex::new(()));
 
-        thread::scope(|s| {
-            for thread_idx in 0..n_thread {
-                let trees_per_thread = if q == -1 { -1 } else { (q + thread_idx as i64) / n_thread as i64};
+        for thread_idx in 0..n_thread {
+            let trees_per_thread = if q == -1 { -1 } else { (q + thread_idx as i64) / n_thread as i64};
 
-                let mu1 = n_nodes_mutex.clone();
-                let mu2 = shared_nodes_mutex.clone();
-                let mu3 = builder_mutex.clone();
+            let mu1 = n_nodes_mutex.clone();
+            let mu2 = shared_nodes_mutex.clone();
+            let mu3 = builder_mutex.clone();
 
-                let ann = annoy.clone();
+            let ann = annoy.clone();
 
-                s.spawn(move || {
-                    let mut thread_roots = Vec::new();
+            task::block_on(async {
+                let mut thread_roots = Vec::new();
 
-                    loop {
-                        /*
+                loop {
+                    /*
+                    {
+                        let ann = ann.lock().unwrap();
+                        let _nodes = &ann._nodes;
+                        let _roots = &ann._roots;
+
+                        println!("thread_roots: {}, nodes: {}, roots: {}, thread: {}. tree_per_thread: {}", 
+                            thread_roots.len(), _nodes.len(), _roots.len(), thread_idx, trees_per_thread);
+                    } */
+                    if q == -1 {
                         {
                             let ann = ann.lock().unwrap();
-                            let _nodes = &ann._nodes;
-                            let _roots = &ann._roots;
+                            let _n_nodes = ann._n_nodes;
+                            let _n_items = ann._n_items;
 
-                            println!("thread_roots: {}, nodes: {}, roots: {}, thread: {}. tree_per_thread: {}", 
-                                thread_roots.len(), _nodes.len(), _roots.len(), thread_idx, trees_per_thread);
-                        } */
-                        if q == -1 {
-                            {
-                                let ann = ann.lock().unwrap();
-                                let _n_nodes = ann._n_nodes;
-                                let _n_items = ann._n_items;
-
-                                mu1.lock().unwrap();
-                                if _n_nodes >= _n_items * 2 {
-                                    break;
-                                }
-                            }
-                        } else {
-                            if thread_roots.len() >= (trees_per_thread as usize) {
+                            mu1.lock().unwrap();
+                            if _n_nodes >= _n_items * 2 {
                                 break;
                             }
                         }
+                    } else {
+                        if thread_roots.len() >= (trees_per_thread as usize) {
+                            break;
+                        }
+                    }
 
-                        let mut indices: Vec<i64> = Vec::new();
-                        {
-                            mu2.lock().unwrap();
-                            let ann = ann.lock().unwrap();
-                            let _nodes = &ann._nodes;
-                            let _n_items = ann._n_items;
+                    let mut indices: Vec<i64> = Vec::new();
+                    {
+                        mu2.lock().unwrap();
+                        let ann = ann.lock().unwrap();
+                        let _nodes = &ann._nodes;
+                        let _n_items = ann._n_items;
 
-                            for i in 0.._n_items {
-                                if let Some(n) = _nodes.get(&i) {
-                                    if n.descendant() >= 1 {
-                                        indices.push(i)
-                                    }
+                        for i in 0.._n_items {
+                            if let Some(n) = _nodes.get(&i) {
+                                if n.descendant() >= 1 {
+                                    indices.push(i)
                                 }
                             }
-                        }
-
-                        {
-                            let mut ann = ann.lock().unwrap();
-                            let ind = ann._make_tree(true,&indices, &mu1, &mu2, &mu3);
-                            thread_roots.push(ind);
                         }
                     }
 
                     {
-                        mu3.lock().unwrap();
                         let mut ann = ann.lock().unwrap();
-                        ann._roots.append(&mut thread_roots);
+                        let ind = ann._make_tree(true,&indices, &mu1, &mu2, &mu3);
+                        thread_roots.push(ind);
                     }
-                });
-            }
-        });
+                }
+
+                {
+                    mu3.lock().unwrap();
+                    let mut ann = ann.lock().unwrap();
+                    ann._roots.append(&mut thread_roots);
+                }
+            });
+        }
     }
 }
 
