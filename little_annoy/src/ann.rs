@@ -9,8 +9,6 @@ use std::marker::PhantomData;
 use std::usize;
 use std::sync::{Arc, Mutex, MutexGuard};
 use std::thread;
-use async_std::task;
-use lockable::*;
 
 use rand::thread_rng;
 use rand::Rng;
@@ -38,84 +36,86 @@ impl<T: PartialOrd> Ord for AnnResult<T> {
 
 pub struct AnnoyThreadBuilder {
 }
-        
+
 
 impl AnnoyThreadBuilder {
-    pub fn build<T, D>(annoy: Arc<Mutex<&mut Annoy<T, D>>>, n_thread: usize, q: i64) 
+    pub fn build<T, D>(annoy: Arc<Mutex<&mut Annoy<T, D>>>, n_thread: usize, q: i64)
         where T: Item + Sync + Send, D: Distance<T>, D::Node: Send + Sync {
-        let n_nodes_mutex = Arc::new(Mutex::new(()));
-        let shared_nodes_mutex = Arc::new(Mutex::new(()));
-        let builder_mutex = Arc::new(Mutex::new(()));
+        let (_nodes, _f, _K, _n_items, _n_nodes, _roots) = {
+            let ann = annoy.lock().unwrap();
 
-        for thread_idx in 0..n_thread {
-            let trees_per_thread = if q == -1 { -1 } else { (q + thread_idx as i64) / n_thread as i64};
+            (
+                ann._nodes.clone(),
+                ann._f,
+                ann._K,
+                ann._n_items,
+                ann._n_nodes,
+                ann._roots.clone()
+            )
+        };
+        let _n_nodes_ = Arc::new(Mutex::new(_n_nodes));
+        let _nodes_ = Arc::new(Mutex::new(_nodes));
+        let _roots_ = Arc::new(Mutex::new(_roots));
 
-            let mu1 = n_nodes_mutex.clone();
-            let mu2 = shared_nodes_mutex.clone();
-            let mu3 = builder_mutex.clone();
+        std::thread::scope(|s| {
+            for thread_idx in 0..n_thread {
+                let trees_per_thread = if q == -1 { -1 } else { (q + thread_idx as i64) / n_thread as i64 };
 
-            let ann = annoy.clone();
+                let _n_nodes_ = _n_nodes_.clone();
+                let _nodes_ = _nodes_.clone();
+                let _roots_ = _roots_.clone();
 
-            task::block_on(async {
-                let mut thread_roots = Vec::new();
-
-                loop {
-                    /*
-                    {
-                        let ann = ann.lock().unwrap();
-                        let _nodes = &ann._nodes;
-                        let _roots = &ann._roots;
-
-                        println!("thread_roots: {}, nodes: {}, roots: {}, thread: {}. tree_per_thread: {}", 
-                            thread_roots.len(), _nodes.len(), _roots.len(), thread_idx, trees_per_thread);
-                    } */
-                    if q == -1 {
-                        {
-                            let ann = ann.lock().unwrap();
-                            let _n_nodes = ann._n_nodes;
-                            let _n_items = ann._n_items;
-
-                            mu1.lock().unwrap();
-                            if _n_nodes >= _n_items * 2 {
+                s.spawn(move || {
+                    let mut thread_roots = Vec::new();
+                    loop {
+                        if q == -1 {
+                            {
+                                _n_nodes_.lock().unwrap();
+                                if _n_nodes >= _n_items * 2 {
+                                    break;
+                                }
+                            }
+                        } else {
+                            if thread_roots.len() >= (trees_per_thread as usize) {
                                 break;
                             }
                         }
-                    } else {
-                        if thread_roots.len() >= (trees_per_thread as usize) {
-                            break;
-                        }
-                    }
 
-                    let mut indices: Vec<i64> = Vec::new();
-                    {
-                        mu2.lock().unwrap();
-                        let ann = ann.lock().unwrap();
-                        let _nodes = &ann._nodes;
-                        let _n_items = ann._n_items;
-
-                        for i in 0.._n_items {
-                            if let Some(n) = _nodes.get(&i) {
-                                if n.descendant() >= 1 {
-                                    indices.push(i)
+                        let mut indices: Vec<i64> = Vec::new();
+                        {
+                            let _nodes = _nodes_.lock().unwrap();
+                            for i in 0.._n_items {
+                                if let Some(n) = _nodes.get(&i) {
+                                    if n.descendant() >= 1 {
+                                        indices.push(i)
+                                    }
                                 }
                             }
                         }
+
+                        let ind = _make_tree::<D, T>(
+                            &_nodes_,
+                            _f,
+                            _K,
+                            _n_items,
+                            &_n_nodes_,
+                            true,
+                            &indices
+                        );
+
+                        thread_roots.push(ind);
                     }
 
                     {
-                        let mut ann = ann.lock().unwrap();
-                        let ind = ann._make_tree(true,&indices, &mu1, &mu2, &mu3);
-                        thread_roots.push(ind);
+                        let mut _roots = _roots_.lock().unwrap();
+                        _roots.append(&mut thread_roots);
                     }
-                }
+                });
+            };
+        });
 
-                {
-                    mu3.lock().unwrap();
-                    let mut ann = ann.lock().unwrap();
-                    ann._roots.append(&mut thread_roots);
-                }
-            });
-        }
+        annoy.lock().unwrap()._roots = _roots_.lock().unwrap().clone();
+        annoy.lock().unwrap()._nodes = _nodes_.lock().unwrap().clone();
     }
 }
 
@@ -191,45 +191,6 @@ impl<T: Item + Sync + Send, D: Distance<T>> Annoy<T, D> {
         self._get_all_nns(v, n, search_k)
     }
 
-    #[cfg(not(feature = "parallel_build"))]
-    fn random_split_index(
-        &self,
-        m: &mut D::Node,
-        indices: &[i64],
-        children: &Vec<&D::Node>,
-    ) -> (Vec<i64>, Vec<i64>) {
-        let mut rng = thread_rng();
-        D::create_split(children, m, self._f, &mut rng);
-
-        let mut children_indices = (Vec::new(), Vec::new());
-
-        for i in indices.iter() {
-            if let Some(n) = self._nodes.get(i) {
-                let side = D::side(&m, n.vector(), &mut rng);
-
-                if side {
-                    children_indices.0.push(*i);
-                } else {
-                    children_indices.1.push(*i);
-                }
-            }
-        }
-
-        while children_indices.0.is_empty() || children_indices.1.is_empty() {
-            children_indices.0.clear();
-            children_indices.1.clear();
-
-            indices.iter().for_each(|j| {
-                if rng.gen::<bool>() {
-                    children_indices.0.push(*j);
-                } else {
-                    children_indices.1.push(*j);
-                }
-            });
-        }
-
-        children_indices
-    }
 
     #[cfg(feature = "parallel_build")]
     fn random_split_index(
@@ -274,88 +235,6 @@ impl<T: Item + Sync + Send, D: Distance<T>> Annoy<T, D> {
         (c1, c2)
     }
 
-    fn _make_tree(&mut self, is_root: bool, indices: &[i64], nodes_mutex: &Mutex<()>, shared_mutex: &Mutex<()>, mu3: &Mutex<()>) -> i64
-    where
-        <D as Distance<T>>::Node: Sync,
-    {
-        if indices.len() == 1 && is_root {
-            return indices[0];
-        }
-
-        let mut m = D::Node::new(self._f);
-        let c = indices.len();
-        
-        if c <= (self._K as usize) && (!is_root || self._n_items <= (self._K as i64) || indices.len() == 1) {
-            let item = {
-                nodes_mutex.lock();
-                let item = self._n_nodes;
-                self._n_nodes += 1;
-                item
-            };
-
-            {
-                shared_mutex.lock();
-
-                if let Some(m) = self._nodes.get_mut(&item) {
-                    m.set_descendant(if is_root { self._n_items as usize } else { indices.len() });
-                    m.set_children(indices.to_owned());
-                }
-            }
-            
-            return item;
-        }
-
-        let children_indices= {
-            shared_mutex.lock();
-            let mut children: Vec<&D::Node> = Vec::default();
-            indices.iter().for_each(|index| {
-                if let Some(n) = self._nodes.get(index) {
-                    children.push(n);
-                }
-            });
-        
-            self.random_split_index(&mut m, indices, &children)
-        };
-
-        let flip = if children_indices.0.len() > children_indices.1.len() {
-            1
-        } else {
-            0
-        };
-
-        m.set_descendant(if is_root { self._n_items as usize } else { indices.len() });
-
-        for side in 0..2 {
-            let ii = side ^ flip;
-            let a = if ii == 0 {
-                &children_indices.0
-            } else {
-                &children_indices.1
-            };
-
-            let mut v = m.children();
-            v[ii] = self._make_tree(is_root, a, nodes_mutex, shared_mutex, mu3);
-
-            m.set_children(v);
-        }
-
-        let item = {
-            nodes_mutex.lock();
-            let item = self._n_nodes;
-            self._n_nodes += 1;
-            item
-        };
-
-        {
-            shared_mutex.lock();
-
-            let f = self._f;
-            let node = self._nodes.entry(item).or_insert_with(|| D::Node::new(f));
-            node.copy(m);
-        }
-
-        item
-    }
 
     fn _get_all_nns(&self, v: &[T], n: usize, mut search_k: i64) -> (Vec<i64>, Vec<f64>)
     where
@@ -473,4 +352,144 @@ impl<T: Item + Sync + Send, D: Distance<T>> Annoy<T, D> {
         let dist = D::distance(self._get(i).vector(), self._get(j).vector(), self._f);
         D::normalized_distance(dist.to_f64().unwrap_or(0.))
     }
+}
+
+#[cfg(not(feature = "parallel_build"))]
+fn random_split_index<T, D>(
+    _nodes: &HashMap<i64, D::Node>,
+    _f: usize,
+    m: &mut D::Node,
+    indices: &[i64],
+    children: &Vec<&D::Node>,
+) -> (Vec<i64>, Vec<i64>) where T: Item + Sync + Send, D: Distance<T> {
+    let mut rng = thread_rng();
+    D::create_split(children, m, _f, &mut rng);
+
+    let mut children_indices = (Vec::new(), Vec::new());
+
+    for i in indices.iter() {
+        if let Some(n) = _nodes.get(i) {
+            let side = D::side(&m, n.vector(), &mut rng);
+
+            if side {
+                children_indices.0.push(*i);
+            } else {
+                children_indices.1.push(*i);
+            }
+        }
+    }
+
+    while children_indices.0.is_empty() || children_indices.1.is_empty() {
+        children_indices.0.clear();
+        children_indices.1.clear();
+
+        indices.iter().for_each(|j| {
+            if rng.gen::<bool>() {
+                children_indices.0.push(*j);
+            } else {
+                children_indices.1.push(*j);
+            }
+        });
+    }
+
+    children_indices
+}
+
+fn _make_tree<D, T>(
+    mut _nodes: &Arc<Mutex<HashMap<i64, D::Node>>>,
+    _f: usize,
+    _K: usize,
+    _n_items: i64,
+    mut _n_nodes: &Arc<Mutex<i64>>,
+    is_root: bool,
+    indices: &[i64]
+) -> i64
+ where T: Item + Sync + Send, D: Distance<T>
+{
+    if indices.len() == 1 && is_root {
+        return indices[0];
+    }
+
+    let mut m = D::Node::new(_f);
+    let c = indices.len();
+
+    if c <= (_K as usize) && (!is_root || _n_items <= (_K as i64) || indices.len() == 1) {
+        let item = {
+            let mut _n_nodes = _n_nodes.lock().unwrap();
+            let item = *_n_nodes;
+            *_n_nodes += 1;
+            item
+        };
+
+        {
+            let mut _nodes = _nodes.lock().unwrap();
+
+            if let Some(m) = _nodes.get_mut(&item) {
+                m.set_descendant(if is_root { _n_items as usize } else { indices.len() });
+                m.set_children(indices.to_owned());
+            }
+        }
+
+        return item;
+    }
+
+    let children_indices= {
+        let _nodes = _nodes.lock().unwrap();
+
+        let mut children: Vec<&D::Node> = Vec::default();
+        indices.iter().for_each(|index| {
+            if let Some(n) = _nodes.get(index) {
+                children.push(n);
+            }
+        });
+
+        random_split_index::<T, D>(&_nodes, _f, &mut m, indices, &children)
+    };
+
+    let flip = if children_indices.0.len() > children_indices.1.len() {
+        1
+    } else {
+        0
+    };
+
+    m.set_descendant(if is_root { _n_items as usize } else { indices.len() });
+
+    for side in 0..2 {
+        let ii = side ^ flip;
+        let a = if ii == 0 {
+            &children_indices.0
+        } else {
+            &children_indices.1
+        };
+
+        let mut v = m.children();
+        v[ii] = {
+            _make_tree::<D, T>(
+              _nodes,
+              _f,
+              _K,
+              _n_items,
+              _n_nodes,
+              is_root,
+              a
+            )
+        };
+        m.set_children(v);
+    }
+
+    let item = {
+        let mut _n_nodes = _n_nodes.lock().unwrap();
+        let item = *_n_nodes;
+        *_n_nodes += 1;
+        item
+    };
+
+    {
+        let mut _nodes = _nodes.lock().unwrap();
+        let f = _f;
+        let node = _nodes.entry(item).or_insert_with(|| D::Node::new(f));
+        node.copy(m);
+    }
+
+    item
 }
