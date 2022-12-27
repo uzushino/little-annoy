@@ -14,8 +14,8 @@ num = "0.4"
 num-traits = "0.2.15"
 rayon = { version = "*", optional = true }
 rand_chacha = "*"
-async-std = "1.11.0"
 log = "0.4.17"
+tokio = { version = "1.23.0", features = ["rt", "rt-multi-thread"] }
 
 [dev-dependencies]
 mnist = "0.4.1"

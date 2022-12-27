@@ -12,12 +12,6 @@ use std::thread;
 
 use rand::thread_rng;
 use rand::Rng;
-use async_std::{
-    io::BufReader,
-    net::{TcpListener, TcpStream, ToSocketAddrs},
-    prelude::*,
-    task,
-};
 
 #[cfg(feature = "parallel_build")]
 use rayon::prelude::*;
@@ -43,10 +37,17 @@ impl<T: PartialOrd> Ord for AnnResult<T> {
 pub struct AnnoyThreadBuilder {
 }
 
+use tokio::runtime::Runtime;
 
 impl AnnoyThreadBuilder {
     pub fn build<T, D>(annoy: Arc<Mutex<&mut Annoy<T, D>>>, n_thread: usize, q: i64)
         where T: Item + Sync + Send, D: Distance<T>, D::Node: Send + Sync + 'static {
+        // let rt  = Runtime::new().unwrap();
+        let rt = tokio::runtime::Builder::new_multi_thread() // or Builder::new_current_thread
+            .worker_threads(10) // ワーカースレッド数
+            .build()
+            .unwrap();
+
         let (_nodes, _f, _K, _n_items, _n_nodes, _roots) = {
             let ann = annoy.lock().unwrap();
 
@@ -71,12 +72,11 @@ impl AnnoyThreadBuilder {
             let _nodes_ = _nodes_.clone();
             let _roots_ = _roots_.clone();
 
-            let handle = task::spawn(async move {
+            let handle = rt.spawn(async move {
                 let mut thread_roots = Vec::new();
                 loop {
                     if q == -1 {
                         {
-                            _n_nodes_.lock().unwrap();
                             if _n_nodes >= _n_items * 2 {
                                 break;
                             }
@@ -121,9 +121,9 @@ impl AnnoyThreadBuilder {
             threads.push(handle);
         };
 
-        task::block_on(async {
+        rt.block_on(async {
             for f in threads {
-                f.await
+                f.await;
             }
         });
 
