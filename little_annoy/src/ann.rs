@@ -121,13 +121,11 @@ impl AnnoyThreadBuilder {
             threads.push(handle);
         };
 
-        println!("---- 1 ----");
         task::block_on(async {
             for f in threads {
                 f.await
             }
         });
-        println!("---- 2 ----");
 
         annoy.lock().unwrap()._n_nodes = _n_nodes_.lock().unwrap().clone();
         annoy.lock().unwrap()._roots = _roots_.lock().unwrap().clone();
@@ -186,7 +184,7 @@ impl<T: Item + Sync + Send, D: Distance<T>> Annoy<T, D> {
         <D as Distance<T>>::Node: Sync + Send + 'static,
     {
         self._n_nodes = self._n_items;
-        AnnoyThreadBuilder::build(Arc::new(Mutex::new(self)), 10, q);
+        AnnoyThreadBuilder::build(Arc::new(Mutex::new(self)), 5, q);
     }
 
     pub fn get_nns_by_vector(&self, v: &[T], n: usize, search_k: i64) -> (Vec<i64>, Vec<f64>)
@@ -256,9 +254,6 @@ impl<T: Item + Sync + Send, D: Distance<T>> Annoy<T, D> {
         D: Distance<T>,
     {
         let mut nodes = self._nodes.clone();
-        println!("{}", nodes.len());
-        println!("{}", self._roots.len());
-
         let mut q: BinaryHeap<(Numeric<T>, i64)> = BinaryHeap::new();
         let f = self._f;
 
@@ -439,10 +434,9 @@ fn _make_tree<D, T>(
         {
             let mut _nodes = _nodes.lock().unwrap();
 
-            if let Some(m) = _nodes.get_mut(&item) {
-                m.set_descendant(if is_root { _n_items as usize } else { indices.len() });
-                m.set_children(indices.to_owned());
-            }
+            let m = _nodes.entry(item).or_insert(D::Node::new(_f));
+            m.set_descendant(if is_root { _n_items as usize } else { indices.len() });
+            m.set_children(indices.to_owned());
         }
 
         return item;

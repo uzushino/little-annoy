@@ -9,12 +9,12 @@ fn main() {
     ann.add_item(2, &[2.0, 2.0]);
     ann.add_item(3, &[4.0, 4.0]);
 
-    for z in 4..1_000 {
+    for z in 4..10_000 {
         ann.add_item(z, &[10.0 + z as f64, 10.0 + z as f64]);
     }
 
     println!("Building index ...");
-    ann.build(1000);
+    ann.build(1_000);
 
     println!("Search the nearest vector in the ANN.");
     let (result, distance) = ann.get_nns_by_vector(&[1.0, 1.0], 10, -1);
