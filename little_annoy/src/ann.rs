@@ -121,12 +121,15 @@ impl AnnoyThreadBuilder {
             threads.push(handle);
         };
 
+        println!("---- 1 ----");
         task::block_on(async {
             for f in threads {
                 f.await
             }
         });
+        println!("---- 2 ----");
 
+        annoy.lock().unwrap()._n_nodes = _n_nodes_.lock().unwrap().clone();
         annoy.lock().unwrap()._roots = _roots_.lock().unwrap().clone();
         annoy.lock().unwrap()._nodes = _nodes_.lock().unwrap().clone();
     }
@@ -253,6 +256,9 @@ impl<T: Item + Sync + Send, D: Distance<T>> Annoy<T, D> {
         D: Distance<T>,
     {
         let mut nodes = self._nodes.clone();
+        println!("{}", nodes.len());
+        println!("{}", self._roots.len());
+
         let mut q: BinaryHeap<(Numeric<T>, i64)> = BinaryHeap::new();
         let f = self._f;
 
@@ -267,7 +273,7 @@ impl<T: Item + Sync + Send, D: Distance<T>> Annoy<T, D> {
         let mut nns: Vec<i64> = Vec::new();
         while nns.len() < (search_k as usize) && !q.is_empty() {
             let top = q.peek().unwrap();
-            let d: T = top.0 .0;
+            let d: T = top.0.0;
             let i = top.1;
             let nd = nodes.entry(i).or_insert_with(|| D::Node::new(f));
 
@@ -418,14 +424,11 @@ fn _make_tree<D, T>(
 ) -> i64
  where T: Item + Sync + Send, D: Distance<T>
 {
-    if indices.len() == 1 && is_root {
+    if indices.len() == 1 && !is_root {
         return indices[0];
     }
 
-    let mut m = D::Node::new(_f);
-    let c = indices.len();
-
-    if c <= (_K as usize) && (!is_root || _n_items <= (_K as i64) || indices.len() == 1) {
+    if indices.len() <= (_K as usize) && (!is_root || _n_items <= (_K as i64) || indices.len() == 1) {
         let item = {
             let mut _n_nodes = _n_nodes.lock().unwrap();
             let item = *_n_nodes;
@@ -445,6 +448,7 @@ fn _make_tree<D, T>(
         return item;
     }
 
+    let mut m = D::Node::new(_f);
     let children_indices= {
         let _nodes = _nodes.lock().unwrap();
 
@@ -482,10 +486,11 @@ fn _make_tree<D, T>(
               _K,
               _n_items,
               _n_nodes,
-              is_root,
+              false,
               a
             )
         };
+
         m.set_children(v);
     }
 
@@ -498,9 +503,8 @@ fn _make_tree<D, T>(
 
     {
         let mut _nodes = _nodes.lock().unwrap();
-        let f = _f;
-        let node = _nodes.entry(item).or_insert_with(|| D::Node::new(f));
-        node.copy(m);
+        let n = _nodes.entry(item).or_insert_with(|| D::Node::new(_f));
+        n.copy(m);
     }
 
     item

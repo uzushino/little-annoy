@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use rand::rngs::ThreadRng;
 use rand::Rng;
 
@@ -87,7 +89,7 @@ pub trait NodeImpl<T> {
 }
 
 pub trait Distance<T: Item> {
-    type Node: NodeImpl<T> + Clone;
+    type Node: NodeImpl<T> + Clone + Debug;
 
     fn distance(x: &[T], y: &[T], f: usize) -> T;
 
