@@ -8,8 +8,6 @@ fn print_distance(ann: &mut Annoy<f64, Euclidean>) {
 }
 
 fn main() {
-    /*
-
        let mut ann: Annoy<f64, Euclidean> = Annoy::new(2);
 
        ann.add_item(0, &[1.0, 1.0]);
@@ -34,5 +32,4 @@ fn main() {
        let _ = ann.load(std::io::BufReader::new(bin));
 
        print_distance(&mut ann);
-    */
 }
