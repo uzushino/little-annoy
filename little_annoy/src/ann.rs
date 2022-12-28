@@ -2,17 +2,17 @@ use crate::distance::{Distance, NodeImpl};
 use crate::item::Item;
 use crate::Numeric;
 
-use std::collections::BinaryHeap;
-use std::collections::HashMap;
-use std::marker::PhantomData;
-use std::os::unix::thread;
-use std::io::BufWriter;
-use std::usize;
-use std::sync::{Arc, Mutex, RwLock, atomic };
-use tokio::runtime::Builder;
 use rand::thread_rng;
 use rand::Rng;
+use std::collections::BinaryHeap;
+use std::collections::HashMap;
+use std::io::BufWriter;
+use std::marker::PhantomData;
+use std::os::unix::thread;
 use std::sync::atomic::Ordering::SeqCst;
+use std::sync::{atomic, Arc, Mutex, RwLock};
+use std::usize;
+use tokio::runtime::Builder;
 
 #[cfg(feature = "parallel_build")]
 use rayon::prelude::*;
@@ -34,15 +34,17 @@ impl<T: PartialOrd> Ord for AnnResult<T> {
     }
 }
 
-
 pub struct AnnoyThreadBuilder<T: Item, D: Distance<T>> {
     n_nodes: atomic::AtomicI64,
     nodes: RwLock<HashMap<i64, D::Node>>,
-    roots: RwLock<Vec<i64>>
+    roots: RwLock<Vec<i64>>,
 }
 
-impl<T: Item + Sync + Send, D: Distance<T>> AnnoyThreadBuilder<T, D> where D::Node: Send + Sync + 'static {
-    pub fn new(n_nodes: i64, nodes: HashMap<i64, D::Node> , roots: Vec<i64>) -> Self {
+impl<T: Item + Sync + Send, D: Distance<T>> AnnoyThreadBuilder<T, D>
+where
+    D::Node: Send + Sync + 'static,
+{
+    pub fn new(n_nodes: i64, nodes: HashMap<i64, D::Node>, roots: Vec<i64>) -> Self {
         Self {
             n_nodes: atomic::AtomicI64::new(n_nodes),
             nodes: RwLock::new(nodes),
@@ -51,8 +53,11 @@ impl<T: Item + Sync + Send, D: Distance<T>> AnnoyThreadBuilder<T, D> where D::No
     }
 
     pub fn build(annoy: Arc<Mutex<&mut Annoy<T, D>>>, n_thread: usize, q: i64)
-        where T: Item + Sync + Send + 'static, D: Distance<T> + 'static, D::Node: Send + Sync{
-
+    where
+        T: Item + Sync + Send + 'static,
+        D: Distance<T> + 'static,
+        D::Node: Send + Sync,
+    {
         let rt = Builder::new_multi_thread() // or Builder::new_current_thread
             .build()
             .unwrap();
@@ -66,7 +71,7 @@ impl<T: Item + Sync + Send, D: Distance<T>> AnnoyThreadBuilder<T, D> where D::No
                 ann._K,
                 ann._n_items,
                 ann._n_nodes,
-                ann._roots.clone()
+                ann._roots.clone(),
             )
         };
 
@@ -74,7 +79,11 @@ impl<T: Item + Sync + Send, D: Distance<T>> AnnoyThreadBuilder<T, D> where D::No
         let mut threads = vec![];
 
         for thread_idx in 0..n_thread {
-            let trees_per_thread = if q == -1 { -1 } else { (q + thread_idx as i64) / n_thread as i64 };
+            let trees_per_thread = if q == -1 {
+                -1
+            } else {
+                (q + thread_idx as i64) / n_thread as i64
+            };
             let thread_policy = Arc::clone(&thread_policy);
 
             let handle = rt.spawn_blocking(move || {
@@ -105,14 +114,7 @@ impl<T: Item + Sync + Send, D: Distance<T>> AnnoyThreadBuilder<T, D> where D::No
                         }
                     }
 
-                    let ind = _make_tree::<D, T>(
-                        &*thread_policy,
-                        _f,
-                        _K,
-                        _n_items,
-                        true,
-                        &indices
-                    );
+                    let ind = _make_tree::<D, T>(&*thread_policy, _f, _K, _n_items, true, &indices);
 
                     thread_roots.push(ind);
                 }
@@ -124,7 +126,7 @@ impl<T: Item + Sync + Send, D: Distance<T>> AnnoyThreadBuilder<T, D> where D::No
             });
 
             threads.push(handle);
-        };
+        }
 
         rt.block_on(async {
             for f in threads {
@@ -137,7 +139,6 @@ impl<T: Item + Sync + Send, D: Distance<T>> AnnoyThreadBuilder<T, D> where D::No
         annoy.lock().unwrap()._nodes = thread_policy.nodes.read().unwrap().clone();
     }
 }
-
 
 #[allow(non_snake_case)]
 pub struct Annoy<T: Item, D>
@@ -230,7 +231,7 @@ impl<T: Item + Sync + Send + 'static, D: Distance<T>> Annoy<T, D> {
         let mut nns: Vec<i64> = Vec::new();
         while nns.len() < (search_k as usize) && !q.is_empty() {
             let top = q.peek().unwrap();
-            let d: T = top.0.0;
+            let d: T = top.0 .0;
             let i = top.1;
             let nd = nodes.entry(i).or_insert_with(|| D::Node::new(f));
 
@@ -334,7 +335,11 @@ fn random_split_index<T, D>(
     m: &mut D::Node,
     indices: &[i64],
     children: &Vec<&D::Node>,
-) -> (Vec<i64>, Vec<i64>) where T: Item + Sync + Send, D: Distance<T> {
+) -> (Vec<i64>, Vec<i64>)
+where
+    T: Item + Sync + Send,
+    D: Distance<T>,
+{
     let mut rng = thread_rng();
     D::create_split(children, m, _f, &mut rng);
 
@@ -374,15 +379,18 @@ fn _make_tree<D, T>(
     _K: usize,
     _n_items: i64,
     is_root: bool,
-    indices: &[i64]
+    indices: &[i64],
 ) -> i64
- where T: Item + Sync + Send, D: Distance<T>
+where
+    T: Item + Sync + Send,
+    D: Distance<T>,
 {
     if indices.len() == 1 && !is_root {
         return indices[0];
     }
 
-    if indices.len() <= (_K as usize) && (!is_root || _n_items <= (_K as i64) || indices.len() == 1) {
+    if indices.len() <= (_K as usize) && (!is_root || _n_items <= (_K as i64) || indices.len() == 1)
+    {
         let item = {
             let item = thread_policy.n_nodes.load(SeqCst);
             thread_policy.n_nodes.fetch_add(1, SeqCst);
@@ -393,7 +401,11 @@ fn _make_tree<D, T>(
             let mut _nodes = thread_policy.nodes.write().unwrap();
 
             let m = _nodes.entry(item).or_insert(D::Node::new(_f));
-            m.set_descendant(if is_root { _n_items as usize } else { indices.len() });
+            m.set_descendant(if is_root {
+                _n_items as usize
+            } else {
+                indices.len()
+            });
             m.set_children(indices.to_owned());
         }
 
@@ -401,7 +413,7 @@ fn _make_tree<D, T>(
     }
 
     let mut m = D::Node::new(_f);
-    let children_indices= {
+    let children_indices = {
         let _nodes = thread_policy.nodes.read().unwrap();
         let mut children: Vec<&D::Node> = Vec::default();
 
@@ -420,7 +432,11 @@ fn _make_tree<D, T>(
         0
     };
 
-    m.set_descendant(if is_root { _n_items as usize } else { indices.len() });
+    m.set_descendant(if is_root {
+        _n_items as usize
+    } else {
+        indices.len()
+    });
 
     for side in 0..2 {
         let ii = side ^ flip;
@@ -431,16 +447,7 @@ fn _make_tree<D, T>(
         };
 
         let mut v = m.children();
-        v[ii] = {
-            _make_tree::<D, T>(
-              thread_policy,
-              _f,
-              _K,
-              _n_items,
-              false,
-              a
-            )
-        };
+        v[ii] = { _make_tree::<D, T>(thread_policy, _f, _K, _n_items, false, a) };
 
         m.set_children(v);
     }
