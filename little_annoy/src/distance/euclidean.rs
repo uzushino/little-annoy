@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 pub struct Euclidean {}
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Node {
     pub children: Vec<i64>,
     pub v: Vec<f64>,

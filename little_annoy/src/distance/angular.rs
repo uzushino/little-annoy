@@ -6,7 +6,7 @@ use rand::rngs::ThreadRng;
 use rand::Rng;
 pub struct Angular {}
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Node<T: Item> {
     pub children: Vec<i64>,
     pub v: Vec<T>,
@@ -62,7 +62,7 @@ impl<T: Item> NodeImpl<T> for Node<T> {
     }
 }
 
-impl<T: Item> Distance<T> for Angular {
+impl<T: Item + serde::Serialize + serde::de::DeserializeOwned> Distance<T> for Angular {
     type Node = Node<T>;
 
     #[inline]

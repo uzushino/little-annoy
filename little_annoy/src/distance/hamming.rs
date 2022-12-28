@@ -7,7 +7,7 @@ use crate::item::Item;
 
 pub struct Hamming {}
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Node<T: Item> {
     pub children: Vec<i64>,
     pub v: Vec<T>,

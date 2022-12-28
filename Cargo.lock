@@ -380,7 +380,6 @@ dependencies = [
  "num-traits",
  "rand",
  "rand_chacha",
- "rayon",
  "rulinalg",
  "serde",
  "tokio",

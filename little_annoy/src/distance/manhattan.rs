@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use crate::distance::{normalize, two_means, Distance, NodeImpl};
 pub struct Manhattan {}
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Node {
     pub children: Vec<i64>,
     pub v: Vec<f64>,
