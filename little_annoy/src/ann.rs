@@ -8,7 +8,6 @@ use std::collections::BinaryHeap;
 use std::collections::HashMap;
 use std::io::BufWriter;
 use std::marker::PhantomData;
-use std::os::unix::thread;
 use std::sync::atomic::Ordering::SeqCst;
 use std::sync::{atomic, Arc, Mutex, RwLock};
 use std::usize;
@@ -58,7 +57,7 @@ where
         D: Distance<T> + 'static,
         D::Node: Send + Sync,
     {
-        let rt = Builder::new_multi_thread() // or Builder::new_current_thread
+        let rt = Builder::new_current_thread()
             .build()
             .unwrap();
 
@@ -86,7 +85,7 @@ where
             };
             let thread_policy = Arc::clone(&thread_policy);
 
-            let handle = rt.spawn_blocking(move || {
+            let handle = rt.spawn(async move {
                 let mut thread_roots = Vec::new();
 
                 loop {
@@ -447,7 +446,7 @@ where
         };
 
         let mut v = m.children();
-        v[ii] = { _make_tree::<D, T>(thread_policy, _f, _K, _n_items, false, a) };
+        v[ii] = _make_tree::<D, T>(thread_policy, _f, _K, _n_items, false, a);
 
         m.set_children(v);
     }
