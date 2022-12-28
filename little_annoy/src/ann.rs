@@ -58,6 +58,7 @@ where
         D::Node: Send + Sync,
     {
         let rt = Builder::new_current_thread()
+            .enable_all()
             .build()
             .unwrap();
 
