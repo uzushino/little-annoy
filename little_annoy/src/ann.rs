@@ -57,10 +57,7 @@ where
         D: Distance<T> + 'static,
         D::Node: Send + Sync,
     {
-        let rt = Builder::new_current_thread()
-            .enable_all()
-            .build()
-            .unwrap();
+        let rt = Builder::new_current_thread().enable_all().build().unwrap();
 
         let (_nodes, _f, _K, _n_items, _n_nodes, _roots) = {
             let ann = annoy.lock().unwrap();
