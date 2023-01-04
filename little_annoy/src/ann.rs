@@ -93,10 +93,8 @@ where
                                 break;
                             }
                         }
-                    } else {
-                        if thread_roots.len() >= (trees_per_thread as usize) {
-                            break;
-                        }
+                    } else if thread_roots.len() >= (trees_per_thread as usize) {
+                        break;
                     }
 
                     let mut indices: Vec<i64> = Vec::new();
@@ -150,7 +148,6 @@ where
     pub _nodes: HashMap<i64, D::Node>,
     pub _roots: Vec<i64>,
 
-    pub _seed: Option<u64>,
     pub t: PhantomData<T>,
 }
 
@@ -163,13 +160,8 @@ impl<T: Item + Sync + Send + 'static, D: Distance<T>> Annoy<T, D> {
             _n_nodes: 0,
             _f: f,
             _K: 6,
-            _seed: None,
             t: PhantomData,
         }
-    }
-
-    pub fn set_seed(&mut self, seed: u64) {
-        self._seed = Some(seed);
     }
 
     pub fn add_item(&mut self, item: i64, w: &[T]) {
@@ -331,7 +323,7 @@ fn random_split_index<T, D>(
     _f: usize,
     m: &mut D::Node,
     indices: &[i64],
-    children: &Vec<&D::Node>,
+    children: &[&D::Node],
 ) -> (Vec<i64>, Vec<i64>)
 where
     T: Item + Sync + Send,
@@ -344,7 +336,7 @@ where
 
     for i in indices.iter() {
         if let Some(n) = _nodes.get(i) {
-            let side = D::side(&m, n.vector(), &mut rng);
+            let side = D::side(m, n.vector(), &mut rng);
 
             if side {
                 children_indices.0.push(*i);
@@ -423,12 +415,7 @@ where
         random_split_index::<T, D>(&_nodes, _f, &mut m, indices, &children)
     };
 
-    let flip = if children_indices.0.len() > children_indices.1.len() {
-        1
-    } else {
-        0
-    };
-
+    let flip = (children_indices.0.len() > children_indices.1.len()) as usize;
     m.set_descendant(if is_root {
         _n_items as usize
     } else {
