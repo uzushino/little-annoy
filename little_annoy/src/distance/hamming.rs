@@ -7,7 +7,7 @@ use crate::item::Item;
 
 pub struct Hamming {}
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct Node<T: Item> {
     pub children: Vec<i64>,
     pub v: Vec<T>,
@@ -65,7 +65,7 @@ impl<T: Item> NodeImpl<T> for Node<T> {
 
 const MAX_ITERATIONS: usize = 20;
 
-impl<T: Item + serde::Serialize + serde::de::DeserializeOwned> Distance<T> for Hamming {
+impl<T: Item + Clone + serde::Serialize + serde::de::DeserializeOwned> Distance<T> for Hamming {
     type Node = Node<T>;
 
     #[inline]

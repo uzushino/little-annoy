@@ -7,19 +7,16 @@ pub trait Item:
     + num::traits::NumAssign
     + num::ToPrimitive
     + num::FromPrimitive
-    + PartialEq
     + PartialOrd
     + Clone
     + Copy
-    + Debug
-    + std::fmt::Display
 {
     fn sqrt(self) -> Self {
-        let v = Self::to_f32(&self)
+        let v = Self::to_f64(&self)
             .map(|v| v.sqrt())
-            .and_then(Self::from_f32);
+            .and_then(Self::from_f64);
 
-        v.unwrap_or_else(|| Self::from_f32(0.).unwrap())
+        v.unwrap_or_else(|| Self::zero())
     }
 }
 
