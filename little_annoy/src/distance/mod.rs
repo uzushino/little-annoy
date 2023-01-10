@@ -1,7 +1,5 @@
-use std::fmt::Debug;
-
-use rand::rngs::ThreadRng;
 use rand::Rng;
+use rand::rngs::ThreadRng;
 
 pub mod angular;
 pub mod euclidean;

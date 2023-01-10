@@ -8,8 +8,13 @@ use std::collections::BinaryHeap;
 use std::collections::HashMap;
 use std::io::BufWriter;
 use std::marker::PhantomData;
-use std::sync::atomic::Ordering::SeqCst;
-use std::sync::{atomic, Arc, Mutex, RwLock};
+use std::sync::{
+    atomic::Ordering::SeqCst,
+    Arc,
+    Mutex,
+    RwLock,
+    atomic::AtomicI64
+};
 use std::usize;
 use tokio::runtime::Builder;
 
@@ -34,7 +39,7 @@ impl<T: PartialOrd> Ord for AnnResult<T> {
 }
 
 pub struct AnnoyThreadBuilder<T: Item, D: Distance<T>> {
-    n_nodes: atomic::AtomicI64,
+    n_nodes: AtomicI64,
     nodes: RwLock<HashMap<i64, D::Node>>,
     roots: RwLock<Vec<i64>>,
 }
@@ -45,7 +50,7 @@ where
 {
     pub fn new(n_nodes: i64, nodes: HashMap<i64, D::Node>, roots: Vec<i64>) -> Self {
         Self {
-            n_nodes: atomic::AtomicI64::new(n_nodes),
+            n_nodes: AtomicI64::new(n_nodes),
             nodes: RwLock::new(nodes),
             roots: RwLock::new(roots),
         }
