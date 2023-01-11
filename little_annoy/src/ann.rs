@@ -8,13 +8,7 @@ use std::collections::BinaryHeap;
 use std::collections::HashMap;
 use std::io::BufWriter;
 use std::marker::PhantomData;
-use std::sync::{
-    atomic::Ordering::SeqCst,
-    Arc,
-    Mutex,
-    RwLock,
-    atomic::AtomicI64
-};
+use std::sync::{atomic::AtomicI64, atomic::Ordering::SeqCst, Arc, Mutex, RwLock};
 use std::usize;
 use tokio::runtime::Builder;
 
@@ -134,9 +128,11 @@ where
             }
         });
 
-        annoy.lock().unwrap()._n_nodes = thread_policy.n_nodes.load(SeqCst);
-        annoy.lock().unwrap()._roots = thread_policy.roots.read().unwrap().clone();
-        annoy.lock().unwrap()._nodes = thread_policy.nodes.read().unwrap().clone();
+        let mut ann = annoy.lock().unwrap();
+
+        ann._n_nodes = thread_policy.n_nodes.load(SeqCst);
+        ann._roots = thread_policy.roots.read().unwrap().clone();
+        ann._nodes = thread_policy.nodes.read().unwrap().clone();
     }
 }
 

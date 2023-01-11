@@ -27,5 +27,4 @@ impl Item for i32 {}
 
 impl Item for u64 {}
 
-impl Item for u32 {
-}
+impl Item for u32 {}

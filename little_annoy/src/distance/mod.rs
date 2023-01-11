@@ -1,5 +1,5 @@
-use rand::Rng;
 use rand::rngs::ThreadRng;
+use rand::Rng;
 
 pub mod angular;
 pub mod euclidean;
