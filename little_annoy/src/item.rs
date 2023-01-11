@@ -1,7 +1,7 @@
-use num::{traits::NumAssign, FromPrimitive, One, ToPrimitive, Zero};
+use num::{traits::NumAssign, FromPrimitive, One, Signed, ToPrimitive, Zero};
 
 pub trait Item:
-    Zero + One + NumAssign + ToPrimitive + FromPrimitive + PartialOrd + Clone + Copy
+    Zero + One + NumAssign + ToPrimitive + FromPrimitive + PartialOrd + Signed + Clone + Copy
 {
     fn sqrt(self) -> Self {
         let v = Self::to_f64(&self)
@@ -24,7 +24,3 @@ impl Item for f32 {}
 impl Item for i64 {}
 
 impl Item for i32 {}
-
-impl Item for u64 {}
-
-impl Item for u32 {}

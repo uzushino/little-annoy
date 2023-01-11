@@ -1,9 +1,11 @@
 use serde::{Deserialize, Serialize};
 
-use crate::distance::{normalize, two_means, Distance, NodeImpl};
-use crate::item::Item;
 use rand::rngs::ThreadRng;
 use rand::Rng;
+
+use crate::distance::{normalize, two_means, Distance, NodeImpl};
+use crate::item::Item;
+
 pub struct Angular {}
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
