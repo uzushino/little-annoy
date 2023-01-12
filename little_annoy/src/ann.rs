@@ -1,3 +1,5 @@
+use bincode;
+use futures::future;
 use rand::thread_rng;
 use rand::Rng;
 use std::collections::BinaryHeap;
@@ -6,9 +8,7 @@ use std::io::BufWriter;
 use std::marker::PhantomData;
 use std::sync::{atomic::AtomicI64, atomic::Ordering::SeqCst, Arc, Mutex, RwLock};
 use std::usize;
-use bincode;
 use tokio::runtime::Builder;
-use futures::future;
 
 use crate::distance::{Distance, NodeImpl};
 use crate::item::Item;
