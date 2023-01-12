@@ -1,7 +1,3 @@
-use crate::distance::{Distance, NodeImpl};
-use crate::item::Item;
-use crate::Numeric;
-
 use rand::thread_rng;
 use rand::Rng;
 use std::collections::BinaryHeap;
@@ -10,15 +6,13 @@ use std::io::BufWriter;
 use std::marker::PhantomData;
 use std::sync::{atomic::AtomicI64, atomic::Ordering::SeqCst, Arc, Mutex, RwLock};
 use std::usize;
-use tokio::runtime::Builder;
-
-#[cfg(feature = "parallel_build")]
-use rayon::prelude::*;
-
-#[cfg(feature = "parallel_build")]
-use rayon::iter::Either;
-
 use bincode;
+use tokio::runtime::Builder;
+use futures::future;
+
+use crate::distance::{Distance, NodeImpl};
+use crate::item::Item;
+use crate::Numeric;
 
 #[derive(PartialEq, PartialOrd)]
 struct AnnResult<T>(T, i64);
@@ -122,14 +116,9 @@ where
             threads.push(handle);
         }
 
-        rt.block_on(async {
-            for f in threads {
-                let _ = f.await;
-            }
-        });
+        rt.block_on(future::join_all(threads));
 
         let mut ann = annoy.lock().unwrap();
-
         ann._n_nodes = thread_policy.n_nodes.load(SeqCst);
         ann._roots = thread_policy.roots.read().unwrap().clone();
         ann._nodes = thread_policy.nodes.read().unwrap().clone();
