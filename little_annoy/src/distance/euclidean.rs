@@ -1,9 +1,8 @@
-use crate::distance::{normalize, two_means, Distance, NodeImpl};
-use num::ToPrimitive;
 use rand::rngs::ThreadRng;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 
+use crate::distance::{normalize, two_means, Distance, NodeImpl};
 use crate::item::Item;
 
 pub struct Euclidean {}

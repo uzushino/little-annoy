@@ -21,11 +21,7 @@ fn get_norm<T: Item>(v: &[T]) -> T {
 
 fn normalize<T: Item>(v: &[T]) -> Vec<T> {
     let norm = get_norm(v);
-    let mut v2 = v.iter().map(|_| T::zero()).collect::<Vec<_>>();
-    for z in 0..v.len() {
-        v2[z] = v[z] / norm;
-    }
-    v2
+    v.iter().map(|&v| v / norm).collect()
 }
 
 fn two_means<T: Item, D: Distance<T>>(
