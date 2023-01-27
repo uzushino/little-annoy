@@ -54,7 +54,6 @@ where
 
         let (_nodes, _f, _K, _n_items, _n_nodes, _roots) = {
             let ann = annoy.lock().unwrap();
-
             (
                 ann._nodes.clone(),
                 ann._f,
@@ -186,7 +185,7 @@ impl<T: Item + Sync + Send + 'static, D: Distance<T>> Annoy<T, D> {
         D: Distance<T>,
     {
         let m = self._nodes.get(&item).unwrap();
-        let v = m.vector();
+        let v = m.as_slice();
 
         self._get_all_nns(v, n, search_k)
     }
@@ -246,7 +245,7 @@ impl<T: Item + Sync + Send + 'static, D: Distance<T>> Annoy<T, D> {
 
             last = *j;
             let mut _n = nodes.entry(*j).or_insert_with(|| D::Node::new(f));
-            let dist = D::distance(v, _n.vector(), self._f);
+            let dist = D::distance(v, _n.as_slice(), self._f);
             nns_dist.push(AnnResult(dist, *j));
         }
 
@@ -303,7 +302,7 @@ impl<T: Item + Sync + Send + 'static, D: Distance<T>> Annoy<T, D> {
     }
 
     pub fn get_distance(self, i: i64, j: i64) -> f64 {
-        let dist = D::distance(self._get(i).vector(), self._get(j).vector(), self._f);
+        let dist = D::distance(self._get(i).as_slice(), self._get(j).as_slice(), self._f);
         D::normalized_distance(dist.to_f64().unwrap_or(0.))
     }
 }
@@ -326,7 +325,7 @@ where
 
     for i in indices.iter() {
         if let Some(n) = _nodes.get(i) {
-            let side = D::side(m, n.vector(), &mut rng);
+            let side = D::side(m, n.as_slice(), &mut rng);
 
             if side {
                 children_indices.0.push(*i);
@@ -378,13 +377,14 @@ where
 
         {
             let mut _nodes = thread_policy.nodes.write().unwrap();
-
             let m = _nodes.entry(item).or_insert(D::Node::new(_f));
+            
             m.set_descendant(if is_root {
                 _n_items as usize
             } else {
                 indices.len()
             });
+           
             m.set_children(indices.to_owned());
         }
 

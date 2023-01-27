@@ -34,17 +34,17 @@ fn two_means<T: Item, D: Distance<T>>(
     let mut j: u64 = rng.gen::<u64>() % (count - 1) as u64;
     j += (j >= i) as u64;
 
-    let mut iv = nodes[i as usize].vector().to_vec();
-    let mut jv = nodes[j as usize].vector().to_vec();
+    let mut iv = nodes[i as usize].as_slice().to_vec();
+    let mut jv = nodes[j as usize].as_slice().to_vec();
 
     let mut ic = T::one();
     let mut jc = T::one();
 
     for _ in 0..ITERATION_STEPS {
         let k = rng.gen::<usize>() % count as usize;
-        let di = ic * D::distance(&iv, nodes[k].vector(), f);
-        let dj = jc * D::distance(&jv, nodes[k].vector(), f);
-        let nk = &nodes[k].vector();
+        let di = ic * D::distance(&iv, nodes[k].as_slice(), f);
+        let dj = jc * D::distance(&jv, nodes[k].as_slice(), f);
+        let nk = &nodes[k].as_slice();
 
         if di < dj {
             for z in 0..f {
@@ -74,7 +74,7 @@ pub trait NodeImpl<T> {
     fn descendant(&self) -> usize;
     fn set_descendant(&mut self, other: usize);
 
-    fn vector(&self) -> &[T];
+    fn as_slice(&self) -> &[T];
     fn set_vector(&self, _other: &[T]) {}
     fn mut_vector(&mut self) -> &mut Vec<T>;
 

@@ -41,7 +41,7 @@ impl<T: Item> NodeImpl<T> for Node<T> {
         self.n_descendants = other;
     }
 
-    fn vector(&self) -> &[T] {
+    fn as_slice(&self) -> &[T] {
         &self.v
     }
 

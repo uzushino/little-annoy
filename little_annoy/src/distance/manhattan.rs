@@ -38,7 +38,7 @@ impl NodeImpl<f64> for Node {
         self.n_descendants = other;
     }
 
-    fn vector(&self) -> &[f64] {
+    fn as_slice(&self) -> &[f64] {
         self.v.as_slice()
     }
 
