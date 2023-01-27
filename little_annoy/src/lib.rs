@@ -1,5 +1,3 @@
-use rand::rngs::StdRng;
-use rand::Rng;
 use std::cmp::Ordering;
 
 pub mod ann;
@@ -28,8 +26,4 @@ impl<T: item::Item> Ord for Numeric<T> {
     fn cmp(&self, other: &Self) -> Ordering {
         self.0.partial_cmp(&other.0).unwrap_or(Ordering::Equal)
     }
-}
-
-fn random_flip(rng: &mut StdRng) -> bool {
-    rng.gen::<bool>()
 }

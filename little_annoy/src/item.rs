@@ -1,25 +1,13 @@
-use std::fmt::Debug;
+use num::{traits::NumAssign, FromPrimitive, One, Signed, ToPrimitive, Zero};
 
 pub trait Item:
-    num::Num
-    + num::Zero
-    + num::One
-    + num::traits::NumAssign
-    + num::ToPrimitive
-    + num::FromPrimitive
-    + PartialEq
-    + PartialOrd
-    + Clone
-    + Copy
-    + Debug
-    + std::fmt::Display
+    Zero + One + NumAssign + ToPrimitive + FromPrimitive + PartialOrd + Signed + Clone + Copy
 {
     fn sqrt(self) -> Self {
-        let v = Self::to_f32(&self)
+        let v = Self::to_f64(&self)
             .map(|v| v.sqrt())
-            .and_then(Self::from_f32);
-
-        v.unwrap_or_else(|| Self::from_f32(0.).unwrap())
+            .and_then(Self::from_f64);
+        v.unwrap_or_else(|| Self::zero())
     }
 }
 
@@ -36,7 +24,3 @@ impl Item for f32 {}
 impl Item for i64 {}
 
 impl Item for i32 {}
-
-impl Item for u64 {}
-
-impl Item for u32 {}

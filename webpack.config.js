@@ -23,4 +23,10 @@ module.exports = {
     asyncWebAssembly: true
   },
   mode: "development",
+  ignoreWarnings: [
+    {
+      module: /little_annoy_wasm/,
+      message: /Critical dependency: the request of a dependency is an expression/,
+    },
+  ],
 };

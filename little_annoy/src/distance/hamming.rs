@@ -1,4 +1,4 @@
-use rand::rngs::StdRng;
+use rand::rngs::ThreadRng;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 
@@ -7,7 +7,7 @@ use crate::item::Item;
 
 pub struct Hamming {}
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 pub struct Node<T: Item> {
     pub children: Vec<i64>,
     pub v: Vec<T>,
@@ -40,7 +40,7 @@ impl<T: Item> NodeImpl<T> for Node<T> {
         self.n_descendants = other;
     }
 
-    fn vector(&self) -> &[T] {
+    fn as_slice(&self) -> &[T] {
         self.v.as_slice()
     }
 
@@ -65,9 +65,10 @@ impl<T: Item> NodeImpl<T> for Node<T> {
 
 const MAX_ITERATIONS: usize = 20;
 
-impl<T: Item + serde::Serialize + serde::de::DeserializeOwned> Distance<T> for Hamming {
+impl<T: Item + Clone + serde::Serialize + serde::de::DeserializeOwned> Distance<T> for Hamming {
     type Node = Node<T>;
 
+    #[inline]
     fn margin(n: &Self::Node, y: &[T]) -> T {
         let n_bits = 4 * 8_u64;
         let chunk = n.v[0].to_u64().unwrap_or_default() / n_bits;
@@ -77,10 +78,12 @@ impl<T: Item + serde::Serialize + serde::de::DeserializeOwned> Distance<T> for H
         T::from_i64(r).unwrap()
     }
 
-    fn side(n: &Self::Node, y: &[T], _rng: &mut StdRng) -> bool {
+    #[inline]
+    fn side(n: &Self::Node, y: &[T], _rng: &mut ThreadRng) -> bool {
         Self::margin(n, y) > T::zero()
     }
 
+    #[inline]
     fn distance(x: &[T], y: &[T], f: usize) -> T {
         let mut dist = T::zero();
 
@@ -94,11 +97,13 @@ impl<T: Item + serde::Serialize + serde::de::DeserializeOwned> Distance<T> for H
         dist
     }
 
+    #[inline]
     fn normalized_distance(distance: f64) -> f64 {
         distance
     }
 
-    fn create_split(nodes: &[Self::Node], n: &mut Self::Node, f: usize, rng: &mut StdRng) {
+    #[inline]
+    fn create_split(nodes: &[&Self::Node], n: &mut Self::Node, f: usize, rng: &mut ThreadRng) {
         let mut cur_size = 0;
         let mut i = 0;
 

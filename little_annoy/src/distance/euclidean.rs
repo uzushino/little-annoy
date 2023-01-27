@@ -1,37 +1,39 @@
-use num::ToPrimitive;
-use rand::rngs::StdRng;
+use rand::rngs::ThreadRng;
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 
 use crate::distance::{normalize, two_means, Distance, NodeImpl};
-use crate::random_flip;
+use crate::item::Item;
 
 pub struct Euclidean {}
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Node {
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct Node<T: Item> {
     pub children: Vec<i64>,
-    pub v: Vec<f64>,
+    pub v: Vec<T>,
     pub n_descendants: usize,
-    pub a: f64,
+    pub a: T,
     f: usize,
 }
 
-impl NodeImpl<f64> for Node {
+impl<T: Item> NodeImpl<T> for Node<T> {
     fn new(f: usize) -> Self {
         Node {
             children: vec![0, 0],
-            v: vec![0.0; f],
+            v: vec![T::zero(); f],
             n_descendants: 0,
-            a: 0.,
+            a: T::zero(),
             f,
         }
     }
 
-    fn reset(&mut self, v: &[f64]) {
+    fn reset(&mut self, v: &[T]) {
         self.children[0] = 0;
         self.children[1] = 0;
         self.n_descendants = 1;
+        self.a = T::zero();
         self.v = v.to_vec();
+        self.f = 0;
     }
 
     fn descendant(&self) -> usize {
@@ -42,11 +44,11 @@ impl NodeImpl<f64> for Node {
         self.n_descendants = other;
     }
 
-    fn vector(&self) -> &[f64] {
+    fn as_slice(&self) -> &[T] {
         self.v.as_slice()
     }
 
-    fn mut_vector(&mut self) -> &mut Vec<f64> {
+    fn mut_vector(&mut self) -> &mut Vec<T> {
         &mut self.v
     }
 
@@ -63,50 +65,56 @@ impl NodeImpl<f64> for Node {
         self.children = other.children;
         self.v = other.v;
         self.a = other.a;
+        self.f = other.f;
     }
 }
 
-impl Distance<f64> for Euclidean {
-    type Node = Node;
+impl<T: Item + serde::Serialize + serde::de::DeserializeOwned + std::ops::Neg + num::Num>
+    Distance<T> for Euclidean
+{
+    type Node = Node<T>;
 
-    fn margin(n: &Self::Node, y: &[f64]) -> f64 {
+    #[inline]
+    fn margin(n: &Self::Node, y: &[T]) -> T {
         let mut dot = n.a;
 
         (0..y.len()).for_each(|z| {
             let v = n.v[z as usize] * y[z as usize];
-            dot += v.to_f64().unwrap_or_default();
+            dot += v;
         });
 
         dot
     }
 
-    fn side(n: &Self::Node, y: &[f64], rng: &mut StdRng) -> bool {
+    #[inline]
+    fn side(n: &Self::Node, y: &[T], rng: &mut ThreadRng) -> bool {
         let dot = Self::margin(n, y);
-
-        if dot != 0.0 {
-            return dot > 0.0;
+        if dot != T::zero() {
+            return dot > T::zero();
         }
-
-        random_flip(rng)
+        rng.gen()
     }
 
-    fn distance(x: &[f64], y: &[f64], f: usize) -> f64 {
-        let mut d = 0.0;
+    #[inline]
+    fn distance(x: &[T], y: &[T], f: usize) -> T {
+        let mut d = T::zero();
 
         for i in 0..f {
             let v = (x[i as usize] - y[i as usize]) * (x[i as usize] - y[i as usize]);
-            d += v.to_f64().unwrap_or_default();
+            d += v;
         }
 
         d
     }
 
+    #[inline]
     fn normalized_distance(distance: f64) -> f64 {
         distance.max(0.0).sqrt()
     }
 
-    fn create_split(nodes: &[Self::Node], n: &mut Self::Node, f: usize, rng: &mut StdRng) {
-        let (best_iv, best_jv) = two_means::<f64, Euclidean>(rng, nodes, f);
+    #[inline]
+    fn create_split(nodes: &[&Self::Node], n: &mut Self::Node, f: usize, rng: &mut ThreadRng) {
+        let (best_iv, best_jv) = two_means::<T, Euclidean>(rng, nodes, f);
 
         for z in 0..f {
             let best = best_iv[z] - best_jv[z];
@@ -114,10 +122,10 @@ impl Distance<f64> for Euclidean {
         }
 
         n.v = normalize(&n.v);
-        n.a = 0.0;
+        n.a = T::zero();
 
         for z in 0..f {
-            let v = -n.v[z].to_f64().unwrap_or_default() * (best_iv[z] + best_jv[z]) / 2.0;
+            let v = -n.v[z] * (best_iv[z] + best_jv[z]) / (T::one() + T::one());
             n.a += v;
         }
     }
@@ -125,6 +133,8 @@ impl Distance<f64> for Euclidean {
 
 #[cfg(test)]
 mod tests {
+    use rand::thread_rng;
+
     use super::*;
 
     #[test]
@@ -142,7 +152,7 @@ mod tests {
     fn test_side() {
         let mut n = Node::new(2);
         n.v = vec![2., 4.];
-        let actual = Euclidean::side(&n, &[1., 2.], &mut rand::SeedableRng::from_entropy());
+        let actual = Euclidean::side(&n, &[1., 2.], &mut thread_rng());
 
         assert!(actual)
     }

@@ -1,4 +1,4 @@
-use rand::rngs::StdRng;
+use rand::rngs::ThreadRng;
 use rand::Rng;
 
 pub mod angular;
@@ -13,37 +13,20 @@ pub use manhattan::Manhattan;
 
 use crate::item::Item;
 
-fn get_norm(v: &[f64]) -> f64 {
-    v.iter().fold(0.0, |acc, x| acc + x.powf(2.0)).sqrt()
-}
-
-fn normalize<T: num::Num + num::ToPrimitive + num::FromPrimitive + Copy>(v: &[T]) -> Vec<T> {
-    let nv = to_f64_slice(v);
-    let norm = get_norm(&nv);
-
-    let mut v2 = v.iter().map(|_| T::zero()).collect::<Vec<_>>();
-    for z in 0..v.len() {
-        v2[z] = T::from_f64(nv[z] / norm).unwrap();
-    }
-
-    v2
-}
-
 const ITERATION_STEPS: usize = 200;
 
-pub fn to_f64_slice<T: num::ToPrimitive + Copy>(v: &[T]) -> Vec<f64> {
-    let mut c: Vec<f64> = v.iter().map(|_| 0.0).collect();
+fn get_norm<T: Item>(v: &[T]) -> T {
+    v.iter().fold(T::zero(), |acc, &x| acc + (x * x)).sqrt()
+}
 
-    for (z, it) in v.iter().enumerate() {
-        c[z] = it.to_f64().unwrap_or_default();
-    }
-
-    c
+fn normalize<T: Item>(v: &[T]) -> Vec<T> {
+    let norm = get_norm(v);
+    v.iter().map(|&v| v / norm).collect()
 }
 
 fn two_means<T: Item, D: Distance<T>>(
-    rng: &mut StdRng,
-    nodes: &[D::Node],
+    rng: &mut ThreadRng,
+    nodes: &[&D::Node],
     f: usize,
 ) -> (Vec<T>, Vec<T>) {
     let count = nodes.len();
@@ -51,17 +34,17 @@ fn two_means<T: Item, D: Distance<T>>(
     let mut j: u64 = rng.gen::<u64>() % (count - 1) as u64;
     j += (j >= i) as u64;
 
-    let mut iv = nodes[i as usize].vector().to_vec();
-    let mut jv = nodes[j as usize].vector().to_vec();
+    let mut iv = nodes[i as usize].as_slice().to_vec();
+    let mut jv = nodes[j as usize].as_slice().to_vec();
 
     let mut ic = T::one();
     let mut jc = T::one();
 
     for _ in 0..ITERATION_STEPS {
         let k = rng.gen::<usize>() % count as usize;
-        let di = ic * D::distance(&iv, nodes[k].vector(), f);
-        let dj = jc * D::distance(&jv, nodes[k].vector(), f);
-        let nk = &nodes[k].vector();
+        let di = ic * D::distance(&iv, nodes[k].as_slice(), f);
+        let dj = jc * D::distance(&jv, nodes[k].as_slice(), f);
+        let nk = &nodes[k].as_slice();
 
         if di < dj {
             for z in 0..f {
@@ -91,7 +74,7 @@ pub trait NodeImpl<T> {
     fn descendant(&self) -> usize;
     fn set_descendant(&mut self, other: usize);
 
-    fn vector(&self) -> &[T];
+    fn as_slice(&self) -> &[T];
     fn set_vector(&self, _other: &[T]) {}
     fn mut_vector(&mut self) -> &mut Vec<T>;
 
@@ -104,9 +87,9 @@ pub trait Distance<T: Item> {
 
     fn distance(x: &[T], y: &[T], f: usize) -> T;
 
-    fn create_split(nodes: &[Self::Node], n: &mut Self::Node, f: usize, rng: &mut StdRng);
+    fn create_split(nodes: &[&Self::Node], n: &mut Self::Node, f: usize, rng: &mut ThreadRng);
 
-    fn side(n: &Self::Node, y: &[T], rng: &mut StdRng) -> bool;
+    fn side(n: &Self::Node, y: &[T], rng: &mut ThreadRng) -> bool;
 
     fn margin(n: &Self::Node, y: &[T]) -> T;
 

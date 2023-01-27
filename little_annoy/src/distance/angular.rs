@@ -1,13 +1,14 @@
-use rand::rngs::StdRng;
 use serde::{Deserialize, Serialize};
+
+use rand::rngs::ThreadRng;
+use rand::Rng;
 
 use crate::distance::{normalize, two_means, Distance, NodeImpl};
 use crate::item::Item;
-use crate::random_flip;
 
 pub struct Angular {}
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Node<T: Item> {
     pub children: Vec<i64>,
     pub v: Vec<T>,
@@ -40,8 +41,8 @@ impl<T: Item> NodeImpl<T> for Node<T> {
         self.n_descendants = other;
     }
 
-    fn vector(&self) -> &[T] {
-        self.v.as_slice()
+    fn as_slice(&self) -> &[T] {
+        &self.v
     }
 
     fn mut_vector(&mut self) -> &mut Vec<T> {
@@ -66,26 +67,25 @@ impl<T: Item> NodeImpl<T> for Node<T> {
 impl<T: Item + serde::Serialize + serde::de::DeserializeOwned> Distance<T> for Angular {
     type Node = Node<T>;
 
+    #[inline]
     fn margin(n: &Self::Node, y: &[T]) -> T {
         let mut dot = T::zero();
-
         for (z, item) in y.iter().enumerate().take(n.f) {
             dot += n.v[z] * *item;
         }
-
         dot
     }
 
-    fn side(n: &Self::Node, y: &[T], rng: &mut StdRng) -> bool {
+    #[inline]
+    fn side(n: &Self::Node, y: &[T], rng: &mut ThreadRng) -> bool {
         let dot = Self::margin(n, y);
-
         if dot != T::zero() {
             return dot > T::zero();
         }
-
-        random_flip(rng)
+        rng.gen::<bool>()
     }
 
+    #[inline]
     fn distance(x: &[T], y: &[T], f: usize) -> T {
         let mut pp = T::zero();
         let mut qq = T::zero();
@@ -112,11 +112,13 @@ impl<T: Item + serde::Serialize + serde::de::DeserializeOwned> Distance<T> for A
         make_distance()
     }
 
+    #[inline]
     fn normalized_distance(distance: f64) -> f64 {
         distance.max(0.0).sqrt()
     }
 
-    fn create_split(nodes: &[Self::Node], n: &mut Self::Node, f: usize, rng: &mut StdRng) {
+    #[inline]
+    fn create_split(nodes: &[&Self::Node], n: &mut Self::Node, f: usize, rng: &mut ThreadRng) {
         let (best_iv, best_jv) = two_means::<T, Angular>(rng, nodes, f);
 
         for z in 0..f {
