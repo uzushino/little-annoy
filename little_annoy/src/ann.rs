@@ -378,13 +378,13 @@ where
         {
             let mut _nodes = thread_policy.nodes.write().unwrap();
             let m = _nodes.entry(item).or_insert(D::Node::new(_f));
-            
+
             m.set_descendant(if is_root {
                 _n_items as usize
             } else {
                 indices.len()
             });
-           
+
             m.set_children(indices.to_owned());
         }
 
