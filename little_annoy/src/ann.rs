@@ -1,4 +1,3 @@
-use bincode;
 use futures::future;
 use rand::thread_rng;
 use rand::Rng;

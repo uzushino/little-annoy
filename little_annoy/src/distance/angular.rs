@@ -70,9 +70,11 @@ impl<T: Item + serde::Serialize + serde::de::DeserializeOwned> Distance<T> for A
     #[inline]
     fn margin(n: &Self::Node, y: &[T]) -> T {
         let mut dot = T::zero();
-        for (z, item) in y.iter().enumerate().take(n.f) {
-            dot += n.v[z] * *item;
+
+        for (z, &item) in y.iter().enumerate().take(n.f) {
+            dot += n.v[z] * item;
         }
+
         dot
     }
 
@@ -98,18 +100,13 @@ impl<T: Item + serde::Serialize + serde::de::DeserializeOwned> Distance<T> for A
         }
 
         let ppqq = pp * qq;
-
-        let make_distance = || {
-            let two = T::from_f32(2.0).unwrap_or_else(T::zero);
-
-            if ppqq > T::zero() {
-                two - two * pq / ppqq.sqrt()
-            } else {
-                T::from_f32(2.0).unwrap_or_else(T::zero)
-            }
-        };
-
-        make_distance()
+        let two = T::from_f32(2.0).unwrap_or_else(T::zero);
+        
+        if ppqq > T::zero() {
+            two - two * pq / ppqq.sqrt()
+        } else {
+            T::from_f32(2.0).unwrap_or_else(T::zero)
+        }
     }
 
     #[inline]
