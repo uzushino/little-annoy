@@ -101,7 +101,7 @@ impl<T: Item + serde::Serialize + serde::de::DeserializeOwned> Distance<T> for A
 
         let ppqq = pp * qq;
         let two = T::from_f32(2.0).unwrap_or_else(T::zero);
-        
+
         if ppqq > T::zero() {
             two - two * pq / ppqq.sqrt()
         } else {
