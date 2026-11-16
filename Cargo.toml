@@ -1,8 +1,17 @@
 [workspace]
+resolver = "3"
 members = [
-    "little_annoy",
-    "little_annoy_wasm",
+    "crates/little-annoy",
+    "crates/little-annoy-wasm",
 ]
+
+[workspace.package]
+version = "0.2.0"
+edition = "2024"
+rust-version = "1.100"
+license = "Apache-2.0"
+repository = "https://github.com/uzushino/little-annoy"
+authors = ["uzushino <torattoria.mamiya@gmail.com>"]
 
 # The release profile, used for `cargo build --release`.
 [profile.release]

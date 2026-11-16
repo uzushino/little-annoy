@@ -1,7 +1,8 @@
-/target
-data/*
-!data/.gitkeep
-.vscode
-
-node_modules
-little_annoy/target
+/target/
+**/data/*
+!**/data/.gitkeep
+.vscode/
+node_modules/
+.pnpm-store/
+/web/dist/
+/crates/little-annoy-wasm/pkg-node/

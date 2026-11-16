@@ -1,58 +1,148 @@
 # Little Annoy
 
-`little annoy` is written in pure Rust.
+**Approximate nearest-neighbor search in Rust and WebAssembly.**
 
-## Usage
+Build a forest of random projection trees, then search for nearby vectors by
+item ID or by vector. Little Annoy supports native applications and a small
+browser demo built with standard ES modules.
 
-- Clone this repo.
-- Run `cargo run --example demo` in your terminal.
+[Quickstart](#quickstart) · [Rust API](crates/little-annoy/README.md) · [Browser demo](#browser-demo) · [Development](#development)
+
+- **Four distance metrics:** Euclidean, angular, Manhattan and Hamming.
+- **Native parallel builds:** scoped threads share immutable input and build their own trees.
+- **Read-only queries:** searches borrow the index without copying its storage.
+- **Persistence:** versioned postcard snapshots, validated before replacing an index.
+- **Small browser setup:** `wasm-pack`, ES modules and a local static server.
+
+## Quickstart
+
+### Requirements
+
+| Tool      | Version                     | Used for                            |
+| --------- | --------------------------- | ----------------------------------- |
+| Rust      | 1.100+ stable, Edition 2024 | Library, examples and Wasm          |
+| Node.js   | 22.15+                      | Browser demo tooling and tests      |
+| pnpm      | 12.18.0                     | JavaScript dependencies and scripts |
+| wasm-pack | Current release             | Building the Wasm bindings          |
+
+The Rust toolchain is selected by `rust-toolchain.toml`; pnpm is pinned in
+`web/package.json`. Use the `cargo` and `rustc` proxies installed by rustup.
+If Homebrew Rust is earlier in your PATH, put `~/.cargo/bin` first.
+
+From the repository root:
+
+```sh
+cargo run --release -p little-annoy --example demo
+```
+
+## Rust usage
 
 ```rust
 use little_annoy::{Annoy, Euclidean};
 
-fn main() {
-    let mut ann: Annoy<f64, Euclidean> = Annoy::new(2);
+let mut index = Annoy::<f64, Euclidean>::new(2);
+index.add_item(0, &[1.0, 1.0]);
+index.add_item(7, &[5.0, 5.0]);
+index.add_item(42, &[2.0, 2.0]);
+index.build(10);
 
-    ann.add_item(0, &[1.0, 1.0]);
-    ann.add_item(1, &[5.0, 5.0]);
-    ann.add_item(2, &[2.0, 2.0]);
-    ann.add_item(3, &[4.0, 4.0]);
-
-    for z in 4..1_000 {
-        ann.add_item(z, &[10.0, 10.0]);
-    }
-
-    ann.build(1000);
-
-    let (result, distance) = ann.get_nns_by_vector(&[1.0, 1.0], 10, -1);
-    for (i, id) in result.iter().enumerate() {
-        println!("result = {}, distance = {}", *id, distance[i]);
-    }
-}
+let (ids, distances) = index.get_nns_by_vector(&[1.0, 1.0], 2, -1);
+assert_eq!(ids, [0, 42]);
+assert_eq!(distances, [0.0, 2.0_f64.sqrt()]);
 ```
 
-Link: https://github.com/uzushino/little-annoy/blob/main/little_annoy/examples/demo.rs
+IDs may be sparse. Vectors must match the index dimension and contain finite
+numbers. Adding or replacing an item invalidates the forest; call `build` again
+before searching. `build(-1)` chooses a node budget based on the item count.
 
-### Webassembly
+| Metric      | Distance                                                               |
+| ----------- | ---------------------------------------------------------------------- |
+| `Euclidean` | Euclidean distance                                                     |
+| `Angular`   | `sqrt(2 - 2 * cosine_similarity)`                                      |
+| `Manhattan` | Sum of absolute coordinate differences                                 |
+| `Hamming`   | Number of differing bits across packed nonnegative integer coordinates |
 
-You can build the example locally with:
+For continuous metrics, use `f32` or `f64`. `search_k = -1` uses
+`n * tree_count`; a larger search budget trades query time for recall.
 
+See the [API guide](crates/little-annoy/README.md) for lifecycle rules, snapshot
+loading and the available accessors. The [examples](crates/little-annoy/examples)
+include a save/load round trip and perceptual image-hash matching.
+
+## Browser demo
+
+Install the requirements above, then run:
+
+```sh
+cargo install wasm-pack --locked
+cd web
+pnpm install --frozen-lockfile --ignore-scripts
+pnpm run build
+pnpm run serve
 ```
-$ npm run build
-$ npm run serve
+
+Open [http://127.0.0.1:8080](http://127.0.0.1:8080) and check the browser console
+for the neighbor IDs and distances. Set `PORT` to use a different port.
+
+The build runs `wasm-pack --target web` and writes a static site to `web/dist/`.
+The browser loads the generated ES module and initializes the Wasm directly.
+Webpack and other JavaScript bundlers are not required. JavaScript has a single
+development dependency: Prettier.
+
+After editing Rust or JavaScript, run `pnpm run build` again and refresh the page.
+The demo also shows how to release Wasm objects with `.free()`.
+
+## Project layout
+
+```text
+crates/
+  little-annoy/       Rust library, examples, benchmarks and regression tests
+  little-annoy-wasm/  JavaScript bindings and boundary validation
+web/
+  index.html         Browser demo
+  index.js           Native ES module entry point
+  scripts/           Wasm build and static server
+  tests/             Browser-target and Node.js Wasm integration tests
 ```
 
-you can run npm serve then go to http://localhost:8080.
+The Rust library separates item storage (`index`), tree construction (`build`),
+traversal and ranking (`search`), snapshots (`persistence`) and distance
+strategies (`metrics`). Typed `Item`, `Bucket` and `Split` nodes encode the tree
+structure; each distance strategy defines its own split type.
 
-## Demo
+Rust 1.100's `!` type marks infallible value validation. `DropGuard` restores the
+registered items if a build worker panics. Browser Wasm builds run sequentially.
 
-```bash
+## Development
 
-$ cargo run --release --example demo
+Rust checks, from the repository root:
 
+```sh
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets --locked -- -D warnings
+cargo test --workspace --all-targets --locked
+cargo test --workspace --doc --locked
 ```
 
-## See also
+Web checks, from `web/`:
 
-spotify/annoy  
-https://github.com/spotify/annoy
+```sh
+pnpm run format:check
+pnpm run build
+pnpm run test:browser
+pnpm run test:wasm
+pnpm audit
+```
+
+`test:browser` exercises the browser-target ES module and checks static asset
+serving, including the Wasm content type. `test:wasm` exercises the Node.js
+bindings. Both use Node's built-in test runner. [CI](.github/workflows/ci.yml)
+runs Rust checks and builds and tests the demo from the frozen pnpm lockfile.
+
+Snapshots use the current postcard format. Previous bincode/node-map files and
+old internal APIs are intentionally unsupported. `save` and `load` return
+`std::io::Result<()>`.
+
+## License
+
+[Apache-2.0](LICENSE). Inspired by [Spotify Annoy](https://github.com/spotify/annoy).

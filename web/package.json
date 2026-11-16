@@ -1,0 +1,19 @@
+{
+  "name": "little-annoy-demo",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "serve": "node scripts/serve.mjs",
+    "format:check": "prettier --check index.js index.html package.json \"scripts/*.mjs\" \"tests/*\" ../README.md",
+    "test:wasm": "wasm-pack build ../crates/little-annoy-wasm --target nodejs --out-dir pkg-node --dev && node --test tests/wasm.cjs",
+    "test:browser": "node --test tests/browser.mjs"
+  },
+  "engines": {
+    "node": ">=22.15"
+  },
+  "devDependencies": {
+    "prettier": "^3.10.1"
+  },
+  "type": "module",
+  "packageManager": "pnpm@12.18.0"
+}
